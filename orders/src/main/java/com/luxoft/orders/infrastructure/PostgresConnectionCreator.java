@@ -1,4 +1,4 @@
-package com.luxoft.orders;
+package com.luxoft.orders.infrastructure;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -12,6 +12,7 @@ import java.util.Properties;
  * @version 1.0.0
  * @since   2021-06-16
  */
+@Deprecated
 public class PostgresConnectionCreator {
     /**
      * Creates a PostgreSQL connection

@@ -1,5 +1,9 @@
 package com.luxoft.orders;
 
+import com.luxoft.orders.domain.OrderNotFoundException;
+import com.luxoft.orders.domain.OrderPositionExistsException;
+import com.luxoft.orders.infrastructure.PostgresConnectionCreator;
+
 import java.math.BigDecimal;
 import java.sql.*;
 import java.time.OffsetDateTime;
@@ -11,6 +15,7 @@ import java.time.OffsetDateTime;
  * @version 1.0.0
  * @since   2021-06-15
  */
+@Deprecated
 public class OrdersApplication {
     private static final int UPDATE_BATCH_SIZE = 100;
 
@@ -183,11 +188,6 @@ public class OrdersApplication {
     private static void doneOrders() {
         try (Connection connection = openConnection()) {
             connection.setAutoCommit(false);
-
-            String lockOrdersTableQueryStr = "LOCK TABLE ordering IN SHARE MODE";
-
-            PreparedStatement lockOrdersTableStatement = connection.prepareStatement(lockOrdersTableQueryStr);
-            lockOrdersTableStatement.execute();
 
             String selectOrdersCountQueryStr = "SELECT COUNT(id) FROM ordering WHERE done = false;";
             PreparedStatement selectOrdersCountStatement = connection.prepareStatement(selectOrdersCountQueryStr);

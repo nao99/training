@@ -1,4 +1,4 @@
-package com.luxoft.orders;
+package com.luxoft.orders.domain;
 
 /**
  * OrderPositionExistsException class
@@ -7,7 +7,7 @@ package com.luxoft.orders;
  * @version 1.0.0
  * @since   2021-06-17
  */
-public class OrderPositionExistsException extends Exception {
+public class OrderPositionExistsException extends OrderException {
     /**
      * OrderPositionExistsException constructor
      *
