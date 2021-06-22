@@ -1,8 +1,7 @@
 package com.luxoft.orders;
 
 import com.luxoft.orders.domain.OrderNotFoundException;
-import com.luxoft.orders.domain.OrderPositionExistsException;
-import com.luxoft.orders.infrastructure.PostgresConnectionCreator;
+import com.luxoft.orders.persistent.PostgresConnectionCreator;
 
 import java.math.BigDecimal;
 import java.sql.*;
@@ -30,10 +29,9 @@ public class OrdersApplication {
      *
      * @param args arguments
      *
-     * @throws OrderPositionExistsException if an order position already exists
      * @throws OrderNotFoundException              if an order not found
      */
-    public static void main(String[] args) throws OrderPositionExistsException, OrderNotFoundException {
+    public static void main(String[] args) throws OrderNotFoundException {
         // createOrder("Armen");
         // addPositionToOrder(17L, "Куртка", 1, new BigDecimal("500"));
         // replacePositionCount(22L, 1);
@@ -68,14 +66,13 @@ public class OrdersApplication {
      * @param positionCount a count of position
      * @param positionPrice a price of position
      *
-     * @throws OrderPositionExistsException if an order already has the same position
      */
     private static void addPositionToOrder(
         long orderId,
         String positionName,
         int positionCount,
         BigDecimal positionPrice
-    ) throws OrderNotFoundException, OrderPositionExistsException {
+    ) throws OrderNotFoundException {
         try (Connection connection = openConnection()) {
             connection.setAutoCommit(false);
 
@@ -98,10 +95,11 @@ public class OrdersApplication {
             selectPositionStatement.setString(2, positionName);
 
             ResultSet positionResult = selectPositionStatement.executeQuery();
-            if (positionResult.isBeforeFirst()) {
-                String messagePattern = "Order %d already has the \"%s\" position";
-                throw new OrderPositionExistsException(String.format(messagePattern, orderId, positionName));
-            }
+
+//            if (positionResult.isBeforeFirst()) {
+//                String messagePattern = "Order %d already has the \"%s\" position";
+//                throw new OrderPositionExistsException(String.format(messagePattern, orderId, positionName));
+//            }
 
             String addPositionQueryStr =
                 "INSERT INTO ordering_items (ordering_id, item_name, item_count, item_price) " +

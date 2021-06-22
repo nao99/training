@@ -1,8 +1,7 @@
 package com.luxoft.orders.domain;
 
 import com.luxoft.orders.domain.model.Order;
-import com.luxoft.orders.domain.model.OrderId;
-import com.luxoft.orders.infrastructure.DataAccessException;
+import com.luxoft.orders.persistent.DataAccessException;
 
 import java.sql.Connection;
 import java.util.Optional;
@@ -16,7 +15,7 @@ import java.util.Optional;
  */
 public interface OrderRepository {
     /**
-     * Finds an {@link Order} by an {@link OrderId}
+     * Finds an {@link Order} by an id
      *
      * @param connection a connection
      * @param id         an order id
@@ -24,26 +23,26 @@ public interface OrderRepository {
      * @return an order if exists
      * @throws DataAccessException if something was wrong
      */
-    Optional<Order> find(Connection connection, OrderId id) throws DataAccessException;
+    Optional<Order> findById(Connection connection, Long id) throws DataAccessException;
 
     /**
-     * Inserts a new {@link Order}
+     * Saves an {@link Order}
      *
      * @param connection a connection
      * @param order      an order
      *
-     * @return the same order with generated id
+     * @return a saved order
      * @throws DataAccessException if something was wrong
      */
-    Order insert(Connection connection, Order order) throws DataAccessException;
+    Order save(Connection connection, Order order) throws DataAccessException;
 
     /**
-     * Updates an {@link Order}
+     * Finds a count of {@link Order}s
      *
      * @param connection a connection
-     * @param order      an order
      *
+     * @return a count of orders
      * @throws DataAccessException if something was wrong
      */
-    void update(Connection connection, Order order) throws DataAccessException;
+    long count(Connection connection) throws DataAccessException;
 }

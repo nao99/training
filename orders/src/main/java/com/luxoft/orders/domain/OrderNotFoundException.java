@@ -8,11 +8,6 @@ package com.luxoft.orders.domain;
  * @since   2021-06-17
  */
 public class OrderNotFoundException extends OrderException {
-    /**
-     * OrderNotFoundException constructor
-     *
-     * @param message an exception message
-     */
     public OrderNotFoundException(String message) {
         super(message);
     }

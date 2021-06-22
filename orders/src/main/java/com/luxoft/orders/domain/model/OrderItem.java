@@ -1,5 +1,8 @@
 package com.luxoft.orders.domain.model;
 
+import java.math.BigDecimal;
+import java.util.Objects;
+
 /**
  * OrderItem class
  *
@@ -8,41 +11,17 @@ package com.luxoft.orders.domain.model;
  * @since   2021-06-15
  */
 public class OrderItem {
-    /**
-     * Item id
-     */
-    private final OrderItemId id;
+    private Long id;
 
-    /**
-     * Order id
-     */
-    private final OrderId orderId;
+    private Long orderId;
 
-    /**
-     * Item name
-     */
-    private final OrderItemName itemName;
+    private String itemName;
 
-    /**
-     * Items count
-     */
-    private OrderItemCount count;
+    private int count;
 
-    /**
-     * Item price
-     */
-    private OrderItemPrice price;
+    private BigDecimal price;
 
-    /**
-     * OrderItem constructor
-     *
-     * @param id       an item id
-     * @param orderId  an order id
-     * @param itemName an item id
-     * @param count    an item count
-     * @param price    an item price
-     */
-    private OrderItem(OrderItemId id, OrderId orderId, OrderItemName itemName, OrderItemCount count, OrderItemPrice price) {
+    private OrderItem(Long id, Long orderId, String itemName, int count, BigDecimal price) {
         this.id = id;
         this.orderId = orderId;
         this.itemName = itemName;
@@ -50,77 +29,39 @@ public class OrderItem {
         this.price = price;
     }
 
-    /**
-     * OrderItem static constructor
-     *
-     * @param id       an id
-     * @param orderId  an order id
-     * @param itemName a name
-     * @param count    a count
-     * @param price    a price
-     */
-    public static OrderItem of(
-        OrderItemId id,
-        OrderId orderId,
-        OrderItemName itemName,
-        OrderItemCount count,
-        OrderItemPrice price
-    ) {
+    public static OrderItem of(Long id, Long orderId, String itemName, int count, BigDecimal price) {
         return new OrderItem(id, orderId, itemName, count, price);
     }
 
-    /**
-     * OrderItem static constructor
-     *
-     * @param orderId  an order id
-     * @param itemName an item id
-     * @param count    an item count
-     * @param price    an item price
-     */
-    public static OrderItem of(OrderId orderId, OrderItemName itemName, OrderItemCount count, OrderItemPrice price) {
-        return new OrderItem(null, orderId, itemName, count, price);
+    public static OrderItem of(String itemName, int count, BigDecimal price) {
+        return new OrderItem(null, null, itemName, count, price);
     }
 
-    /**
-     * Recreates this order item with id
-     *
-     * @param id an id
-     * @return this order item with id
-     */
-    public OrderItem withId(OrderItemId id) {
-        return new OrderItem(id, orderId, itemName, count, price);
-    }
-
-    public OrderItemId getId() {
+    public Long getId() {
         return id;
     }
 
-    public OrderId getOrderId() {
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getOrderId() {
         return orderId;
     }
 
-    public OrderItemName getName() {
+    public void setOrderId(Long orderId) {
+        this.orderId = orderId;
+    }
+
+    public String getName() {
         return itemName;
     }
 
-    public OrderItemCount getCount() {
+    public int getCount() {
         return count;
     }
 
-    public void replaceCount(int countValue) {
-        OrderItemCount replacedCount = OrderItemCount.of(countValue);
-        if (count.equals(replacedCount)) {
-            return;
-        }
-
-        OrderItemPrice pricePerOneItem = price.divide(count.count());
-        OrderItemPrice replacedPrice = pricePerOneItem.multiply(replacedCount.count());
-
-        count = replacedCount;
-        price = replacedPrice;
-    }
-
-    public OrderItemPrice getPrice() {
+    public BigDecimal getPrice() {
         return price;
     }
 
@@ -139,10 +80,7 @@ public class OrderItem {
 
         OrderItem otherOrderItem = (OrderItem) other;
 
-        return orderId.equals(otherOrderItem.orderId)
-            && itemName.equals(otherOrderItem.itemName)
-            && count.equals(otherOrderItem.count)
-            && price.equals(otherOrderItem.price);
+        return Objects.equals(this.id, otherOrderItem.id);
     }
 
     /**
@@ -150,13 +88,6 @@ public class OrderItem {
      */
     @Override
     public int hashCode() {
-        int hash = 17;
-
-        hash = 31 * hash + orderId.hashCode();
-        hash = 31 * hash + itemName.hashCode();
-        hash = 31 * hash + count.hashCode();
-        hash = 31 * hash + price.hashCode();
-
-        return hash;
+        return Objects.hashCode(id);
     }
 }

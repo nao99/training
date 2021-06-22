@@ -1,13 +1,11 @@
 package com.luxoft.orders.domain;
 
-import com.luxoft.orders.domain.model.OrderId;
 import com.luxoft.orders.domain.model.OrderItem;
-import com.luxoft.orders.domain.model.OrderItemId;
-import com.luxoft.orders.domain.model.OrderItemName;
-import com.luxoft.orders.infrastructure.DataAccessException;
+import com.luxoft.orders.persistent.DataAccessException;
 
 import java.sql.Connection;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * OrderItemRepository interface
@@ -18,7 +16,7 @@ import java.util.Optional;
  */
 public interface OrderItemRepository {
     /**
-     * Finds an {@link OrderItem} by an {@link OrderItemId}
+     * Finds an {@link OrderItem} by id
      *
      * @param connection a connection
      * @param id         an order item id
@@ -26,53 +24,27 @@ public interface OrderItemRepository {
      * @return an order item if exists
      * @throws DataAccessException if something was wrong
      */
-    Optional<OrderItem> find(Connection connection, OrderItemId id) throws DataAccessException;
+    Optional<OrderItem> findById(Connection connection, Long id) throws DataAccessException;
 
     /**
-     * Finds an {@link OrderItem} by an {@link OrderItemId} and {@link OrderItemName}
-     *
-     * @param connection a connection
-     * @param orderId    an order id
-     * @param name       a name
-     *
-     * @return an order item
-     * @throws DataAccessException if something was wrong
-     */
-    Optional<OrderItem> findByOrderIdAndName(
-        Connection connection,
-        OrderId orderId,
-        OrderItemName name
-    ) throws DataAccessException;
-
-    /**
-     * Finds {@link OrderItem}s by an {@link OrderId}
+     * Finds {@link OrderItem}s by order id
      *
      * @param connection a connection
      * @param orderId    an order id
      *
-     * @return an iterable of order items
+     * @return a set of order items
      * @throws DataAccessException if something was wrong
      */
-    Iterable<OrderItem> findByOrderId(Connection connection, OrderId orderId) throws DataAccessException;
+    Set<OrderItem> findByOrderId(Connection connection, Long orderId) throws DataAccessException;
 
     /**
-     * Inserts a new {@link OrderItem}
+     * Saves an {@link OrderItem}
      *
      * @param connection a connection
-     * @param orderItem  an order item
+     * @param item       an order item
      *
-     * @return the same order item with generated id
+     * @return a saved order item
      * @throws DataAccessException if something was wrong
      */
-    OrderItem insert(Connection connection, OrderItem orderItem) throws DataAccessException;
-
-    /**
-     * Updates an {@link OrderItem}
-     *
-     * @param connection a connection
-     * @param orderItem  an order item
-     *
-     * @throws DataAccessException if something was wrong
-     */
-    void update(Connection connection, OrderItem orderItem) throws DataAccessException;
+    OrderItem save(Connection connection, OrderItem item) throws DataAccessException;
 }

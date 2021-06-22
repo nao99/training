@@ -3,8 +3,9 @@ package com.luxoft.orders.domain.model;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
-import java.sql.Timestamp;
-import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -17,33 +18,12 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class OrderTest {
     /**
-     * Test for {@link Order#withId(OrderId)}
-     */
-    @Test
-    public void withId() throws Exception {
-        // given
-        OrderId id = OrderId.of(1L);
-        Order order = Order.of(OrderUsername.of("Alex"));
-
-        // when
-        Order result = order.withId(id);
-
-        // then
-        assertEquals(id, result.getId());
-
-        assertEquals(order.getUsername(), result.getUsername());
-        assertEquals(order.isDone(), result.isDone());
-        assertEquals(order.getItems(), result.getItems());
-        assertEquals(order.getUpdatedAt(), result.getUpdatedAt());
-    }
-
-    /**
      * Test for {@link Order#done()}
      */
     @Test
     public void done() throws Exception {
         // given
-        Order order = Order.of(OrderUsername.of("Alex"));
+        Order order = createOrder(1L, 1L);
         boolean orderIsDone = order.isDone();
 
         // when
@@ -60,22 +40,35 @@ class OrderTest {
     @Test
     public void addItem() throws Exception {
         // given
-        Order order = Order.of(OrderId.of(1L), OrderUsername.of("Alex"), false, Timestamp.from(Instant.now()));
+        Long orderId = 1L;
+        Long itemId = 1L;
+
+        Order order = createOrder(orderId, itemId);
         int orderItemsSize = order.getItems().size();
 
-        OrderItem orderItem = OrderItem.of(
-            OrderItemId.of(1L),
-            order.getId(),
-            OrderItemName.of("Мокасины"),
-            OrderItemCount.of(4),
-            OrderItemPrice.of(BigDecimal.valueOf(40))
-        );
+        OrderItem item = OrderItem.of(2L, orderId, "Shoes", 15, BigDecimal.valueOf(1500L));
 
         // when
-        order.addItem(orderItem);
+        order.addItem(item);
 
         // then
-        assertNotEquals(orderItemsSize, order.getItems().size());
-        assertEquals(orderItem, order.getItems().iterator().next());
+        assertEquals(1, order.getItems().size() - orderItemsSize);
+    }
+
+    /**
+     * Creates a new {@link Order} for testing purposes
+     *
+     * @param orderId an order id
+     * @param itemId  an order item id
+     *
+     * @return a new order
+     */
+    private Order createOrder(Long orderId, Long itemId) {
+        OrderItem item = OrderItem.of(itemId, orderId, "Boots", 15, BigDecimal.valueOf(1500L));
+        Set<OrderItem> items = new HashSet<>() {{
+            add(item);
+        }};
+
+        return Order.of(orderId, "Alex", false, LocalDateTime.now(), items);
     }
 }
