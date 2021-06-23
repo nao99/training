@@ -67,7 +67,18 @@ public class Order {
         items.add(item);
     }
 
-    private void updateTimestamp() {
+    public void updateTimestamp() {
         updatedAt = LocalDateTime.now();
+    }
+
+    @Override
+    public String toString() {
+        return "Order{" +
+            "id=" + id +
+            ", username='" + username + '\'' +
+            ", done=" + done +
+            ", updatedAt=" + updatedAt +
+            ", items=" + items +
+            '}';
     }
 }

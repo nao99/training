@@ -48,12 +48,14 @@ public class OrderServiceImpl implements OrderService {
         );
 
         order.addItem(orderItem);
+        order.updateTimestamp();
+
         transactionRunner.run(connection -> repository.save(connection, order));
     }
 
     @Override
     public void changeOrderItemCount(OrderItem orderItem, int count) {
-
+        // TODO: try to update updatedAt field
     }
 
     @Override

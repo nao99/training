@@ -34,8 +34,8 @@ public class JdbcTransactionRunner implements TransactionRunner {
                     return result;
                 } catch (SQLException e) {
                     var errorMessage = String.format("Unable to execute an operation: \"%s\"", e.getMessage());
-                    logger.error(errorMessage);
 
+                    logger.error(errorMessage);
                     connection.rollback();
 
                     throw new DatabaseException(errorMessage, e);

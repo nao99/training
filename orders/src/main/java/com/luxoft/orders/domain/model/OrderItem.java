@@ -81,4 +81,15 @@ public class OrderItem {
         count = newCount;
         price = newPrice;
     }
+
+    @Override
+    public String toString() {
+        return "OrderItem{" +
+            "id=" + id +
+            ", orderId=" + orderId +
+            ", itemName='" + itemName + '\'' +
+            ", count=" + count +
+            ", price=" + price +
+            '}';
+    }
 }

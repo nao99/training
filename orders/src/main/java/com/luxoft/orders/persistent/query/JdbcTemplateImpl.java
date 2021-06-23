@@ -1,6 +1,8 @@
 package com.luxoft.orders.persistent.query;
 
 import com.luxoft.orders.persistent.DatabaseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.*;
 import java.util.List;
@@ -15,11 +17,15 @@ import java.util.function.Function;
  * @since   2021-06-18
  */
 public class JdbcTemplateImpl implements JdbcTemplate {
+    private static final Logger logger = LoggerFactory.getLogger(JdbcTemplateImpl.class);
+
     @Override
     public long update(Connection connection, String sql, List<Object> parameters) throws DatabaseException {
         try (var statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             prepareParametersToStatement(statement, parameters);
+
             statement.executeUpdate();
+            logger.debug("{}", statement);
 
             try (var resultSet = statement.getGeneratedKeys()) {
                 resultSet.next();
@@ -40,6 +46,7 @@ public class JdbcTemplateImpl implements JdbcTemplate {
         try (var statement = connection.prepareStatement(sql)) {
             prepareParametersToStatement(statement, parameters);
             try (var resultSet = statement.executeQuery()) {
+                logger.debug("{}", statement);
                 return Optional.ofNullable(handler.apply(resultSet));
             }
         } catch (SQLException e) {
