@@ -60,7 +60,6 @@ public class JdbcOrderRepository implements OrderRepository {
         }
     }
 
-    // TODO: make type of this method is void or return a really new instance instead of id setting
     @Override
     public Order save(Connection connection, Order order) throws DataAccessException {
         if (!isNew(order)) {
@@ -74,9 +73,12 @@ public class JdbcOrderRepository implements OrderRepository {
         var createdOrder = insert(connection, order);
         var orderItems = createdOrder.getItems();
 
-        for (var orderItem : orderItems) {
-            orderItem.setOrderId(createdOrder.getId());
-            orderItemRepository.save(connection, orderItem);
+        for (int i = 0; i < orderItems.size(); i++) {
+            var orderItem = orderItems.get(i);
+            var orderItemWithOrderId = orderItem.withOrderId(createdOrder.getId());
+
+            var createdOrderItem = orderItemRepository.save(connection, orderItemWithOrderId);
+            orderItems.set(i, createdOrderItem);
         }
 
         return createdOrder;
@@ -129,12 +131,8 @@ public class JdbcOrderRepository implements OrderRepository {
         List<Object> parameters = List.of(order.getUsername(), order.isDone(), order.getUpdatedAt());
 
         try {
-            var id = jdbcTemplate.update(connection, sql, parameters);
-
-            // TODO: avoid setting id via setter
-            order.setId(id);
-
-            return order;
+            var orderId = jdbcTemplate.update(connection, sql, parameters);
+            return order.withId(orderId);
         } catch (DatabaseException e) {
             var errorMessage = String.format("Unable to creates an order: \"%s\"", e.getMessage());
             logger.error(errorMessage);

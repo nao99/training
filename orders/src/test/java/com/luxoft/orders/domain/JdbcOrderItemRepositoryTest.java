@@ -137,9 +137,9 @@ class JdbcOrderItemRepositoryTest {
             var oldOrderItemCount = createdOrderItem.getCount();
             var oldOrderItemPrice = createdOrderItem.getPrice();
 
-            orderItem.changeCount(15);
+            createdOrderItem.changeCount(15);
 
-            var updatedOrderItem = repository.save(connection, orderItem);
+            var updatedOrderItem = repository.save(connection, createdOrderItem);
 
             // when / then
             var selectedOrderItemOptional = jdbcTemplate.select(
@@ -189,7 +189,7 @@ class JdbcOrderItemRepositoryTest {
             List.of(order.getUsername(), order.isDone(), order.getUpdatedAt())
         );
 
-        order.setId(orderId);
+        order = order.withId(orderId);
 
         return order;
     }

@@ -100,12 +100,8 @@ public class JdbcOrderItemRepository implements OrderItemRepository {
         );
 
         try {
-            var id = jdbcTemplate.update(connection, sql, parameters);
-
-            // TODO: avoid setting id via setter
-            orderItem.setId(id);
-
-            return orderItem;
+            var orderItemId = jdbcTemplate.update(connection, sql, parameters);
+            return orderItem.withId(orderItemId);
         } catch (DatabaseException e) {
             var errorMessage = String.format("Unable to creates an order item: \"%s\"", e.getMessage());
             logger.error(errorMessage);

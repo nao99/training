@@ -12,8 +12,8 @@ import java.util.List;
  * @since   2021-06-15
  */
 public class Order {
-    private Long id;
-    private String username;
+    private final Long id;
+    private final String username;
     private boolean done;
     private LocalDateTime updatedAt;
     private final List<OrderItem> items;
@@ -30,20 +30,16 @@ public class Order {
         return new Order(id, username, done, updatedAt, items);
     }
 
-    public static Order of(String username, List<OrderItem> items) {
-        return new Order(null, username, false, LocalDateTime.now(), items);
-    }
-
     public static Order of(String username) {
         return new Order(null, username, false, LocalDateTime.now(), new ArrayList<>());
     }
 
-    public Long getId() {
-        return id;
+    public Order withId(Long id) {
+        return new Order(id, username, done, updatedAt, items);
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public Long getId() {
+        return id;
     }
 
     public String getUsername() {

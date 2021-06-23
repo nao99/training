@@ -38,7 +38,7 @@ class OrderServiceImplTest {
         var orderId = 1L;
 
         var expectedOrder = Order.of("Alex");
-        expectedOrder.setId(orderId);
+        expectedOrder = expectedOrder.withId(orderId);
 
         var connectionMock = mock(Connection.class);
 

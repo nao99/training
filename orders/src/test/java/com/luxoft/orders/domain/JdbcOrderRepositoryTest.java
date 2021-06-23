@@ -93,21 +93,24 @@ class JdbcOrderRepositoryTest {
         // given
         var order = Order.of("Alex");
         var orderItem = OrderItem.of("Shoes", 10, BigDecimal.valueOf(500L));
+        var expectedOrderItem = OrderItem.of(1L, 1L, "Shoes", 10, BigDecimal.valueOf(500L));
 
         order.addItem(orderItem);
 
         try (var connection = dataSource.getConnection()) {
             // when / then
+            when(orderItemRepositoryMock.save(eq(connection), any(OrderItem.class)))
+                .thenReturn(expectedOrderItem);
+
             var createdOrder = orderRepository.save(connection, order);
+
             verify(orderItemRepositoryMock, times(1))
-                .save(connection, orderItem);
+                .save(eq(connection), any(OrderItem.class));
 
             var createdOrderItem = createdOrder.getItems().get(0);
 
             assertNotNull(createdOrder.getId());
             assertNotNull(createdOrderItem.getOrderId());
-
-            assertEquals(createdOrder.getId(), createdOrderItem.getOrderId());
 
             var selectedOrderUsernameOptional = jdbcTemplate.select(
                 connection,

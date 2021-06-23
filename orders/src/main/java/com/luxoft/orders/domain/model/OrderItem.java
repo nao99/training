@@ -11,9 +11,9 @@ import java.math.RoundingMode;
  * @since   2021-06-15
  */
 public class OrderItem {
-    private Long id;
-    private Long orderId;
-    private String itemName;
+    private final Long id;
+    private final Long orderId;
+    private final String itemName;
     private int count;
     private BigDecimal price;
 
@@ -37,20 +37,20 @@ public class OrderItem {
         return new OrderItem(null, null, itemName, count, price);
     }
 
+    public OrderItem withId(Long id) {
+        return new OrderItem(id, orderId, itemName, count, price);
+    }
+
+    public OrderItem withOrderId(Long orderId) {
+        return new OrderItem(id, orderId, itemName, count, price);
+    }
+
     public Long getId() {
         return id;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public Long getOrderId() {
         return orderId;
-    }
-
-    public void setOrderId(Long orderId) {
-        this.orderId = orderId;
     }
 
     public String getName() {
