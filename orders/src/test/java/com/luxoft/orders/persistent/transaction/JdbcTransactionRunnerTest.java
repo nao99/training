@@ -20,28 +20,15 @@ import static org.mockito.Mockito.*;
  * @since   2021-06-21
  */
 class JdbcTransactionRunnerTest {
-    /**
-     * Data source mock
-     */
     private DataSource dataSourceMock;
-
-    /**
-     * JDBC transaction runner
-     */
     private JdbcTransactionRunner transactionRunner;
 
-    /**
-     * Sets up
-     */
     @BeforeEach
     public void setUp() {
         dataSourceMock = mock(DataSource.class);
         transactionRunner = new JdbcTransactionRunner(dataSourceMock);
     }
 
-    /**
-     * Test for {@link JdbcTransactionRunner#run(TransactionOperation)}
-     */
     @Test
     public void run() throws Exception {
         // given
@@ -69,9 +56,6 @@ class JdbcTransactionRunnerTest {
         assertEquals(expectedReturnResult, result);
     }
 
-    /**
-     * Test for {@link JdbcTransactionRunner#run(TransactionOperation)}
-     */
     @Test
     public void runWhenUnableToEstablishConnection() throws Exception {
         // given
@@ -87,9 +71,6 @@ class JdbcTransactionRunnerTest {
         assertThrows(DatabaseException.class, () -> transactionRunner.run(operation));
     }
 
-    /**
-     * Test for {@link JdbcTransactionRunner#run(TransactionOperation)}
-     */
     @Test
     public void runWheUnableToCommit() throws Exception {
         // given
@@ -116,9 +97,6 @@ class JdbcTransactionRunnerTest {
             .rollback();
     }
 
-    /**
-     * Test for {@link JdbcTransactionRunner#run(TransactionOperation)}
-     */
     @Test
     public void runWhenUnableToRollback() throws Exception {
         // given

@@ -64,7 +64,7 @@ class JdbcOrderRepositoryTest {
             var selectedOrderOptional = orderRepository.findById(connection, createdOrder.getId());
             assertTrue(selectedOrderOptional.isPresent());
 
-            long selectedOrderId = selectedOrderOptional.get().getId();
+            var selectedOrderId = selectedOrderOptional.get().getId();
 
             verify(orderItemRepositoryMock, times(1))
                 .findByOrderId(connection, selectedOrderId);

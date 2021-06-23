@@ -72,8 +72,8 @@ public class JdbcOrderRepository implements OrderRepository {
         }
 
         var createdOrder = insert(connection, order);
-
         var orderItems = createdOrder.getItems();
+
         for (var orderItem : orderItems) {
             orderItem.setOrderId(createdOrder.getId());
             orderItemRepository.save(connection, orderItem);

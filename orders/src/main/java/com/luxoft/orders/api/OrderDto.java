@@ -2,7 +2,7 @@ package com.luxoft.orders.api;
 
 import com.luxoft.orders.domain.model.Order;
 
-import java.util.Set;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -35,9 +35,9 @@ public class OrderDto {
         return order.isDone();
     }
 
-    public Set<OrderItemDto> getItems() {
+    public List<OrderItemDto> getItems() {
         return order.getItems().stream()
             .map(OrderItemDto::of)
-            .collect(Collectors.toSet());
+            .collect(Collectors.toList());
     }
 }

@@ -17,14 +17,11 @@ import static org.junit.jupiter.api.Assertions.*;
  * @since   2021-06-21
  */
 class OrderTest {
-    /**
-     * Test for {@link Order#done()}
-     */
     @Test
     public void done() throws Exception {
         // given
-        Order order = createOrder(1L, 1L);
-        boolean orderIsDone = order.isDone();
+        var order = createOrder(1L, 1L);
+        var orderIsDone = order.isDone();
 
         // when
         order.done();
@@ -40,16 +37,16 @@ class OrderTest {
     @Test
     public void addItem() throws Exception {
         // given
-        Long orderId = 1L;
-        Long itemId = 1L;
+        var orderId = 1L;
+        var itemId = 1L;
 
-        Order order = createOrder(orderId, itemId);
-        int orderItemsSize = order.getItems().size();
+        var order = createOrder(orderId, itemId);
+        var orderItemsSize = order.getItems().size();
 
-        OrderItem item = OrderItem.of(2L, orderId, "Shoes", 15, BigDecimal.valueOf(1500L));
+        var orderItem = OrderItem.of(2L, orderId, "Shoes", 15, BigDecimal.valueOf(1500L));
 
         // when
-        order.addItem(item);
+        order.addItem(orderItem);
 
         // then
         assertEquals(1, order.getItems().size() - orderItemsSize);
@@ -64,9 +61,9 @@ class OrderTest {
      * @return a new order
      */
     private Order createOrder(Long orderId, Long itemId) {
-        OrderItem item = OrderItem.of(itemId, orderId, "Boots", 15, BigDecimal.valueOf(1500L));
+        var orderItem = OrderItem.of(itemId, orderId, "Boots", 15, BigDecimal.valueOf(1500L));
         List<OrderItem> items = new ArrayList<>() {{
-            add(item);
+            add(orderItem);
         }};
 
         return Order.of(orderId, "Alex", false, LocalDateTime.now(), items);

@@ -20,31 +20,22 @@ import static org.mockito.Mockito.*;
  * @since   2021-06-21
  */
 class JdbcTemplateImplTest {
-    /**
-     * JDBC template
-     */
     private JdbcTemplateImpl template;
 
-    /**
-     * Sets up
-     */
     @BeforeEach
     public void setUp() {
         template = new JdbcTemplateImpl();
     }
 
-    /**
-     * Test for {@link JdbcTemplateImpl#update(Connection, String, List)}
-     */
     @Test
     public void update() throws Exception {
         // given
-        Connection connectionMock = mock(Connection.class);
-        String sql = "UPDATE ordering SET done = true WHERE id = ?;";
+        var connectionMock = mock(Connection.class);
+        var sql = "UPDATE ordering SET done = true WHERE id = ?;";
         List<Object> parameters = List.of(15);
 
-        PreparedStatement preparedStatementMock = mock(PreparedStatement.class);
-        ResultSet resultSetMock = mock(ResultSet.class);
+        var preparedStatementMock = mock(PreparedStatement.class);
+        var resultSetMock = mock(ResultSet.class);
 
         long expectedReturnValue = 15L;
 
@@ -79,14 +70,11 @@ class JdbcTemplateImplTest {
         assertEquals(expectedReturnValue, result);
     }
 
-    /**
-     * Test for {@link JdbcTemplateImpl#update(Connection, String, List)}
-     */
     @Test
     public void updateWhenUnableToCreatePreparedStatement() throws Exception {
         // given
-        Connection connectionMock = mock(Connection.class);
-        String sql = "UPDATE ordering SET done = true WHERE id = ?;";
+        var connectionMock = mock(Connection.class);
+        var sql = "UPDATE ordering SET done = true WHERE id = ?;";
         List<Object> parameters = List.of(15);
 
         // when / then
@@ -96,18 +84,15 @@ class JdbcTemplateImplTest {
         assertThrows(DatabaseException.class, () -> template.update(connectionMock, sql, parameters));
     }
 
-    /**
-     * Test for {@link JdbcTemplateImpl#update(Connection, String, List)}
-     */
     @Test
     public void updateWhenUnableToPrepareParametersToStatement() throws Exception {
         // given
-        Connection connectionMock = mock(Connection.class);
-        String sql = "UPDATE ordering SET done = true WHERE id = ?;";
+        var connectionMock = mock(Connection.class);
+        var sql = "UPDATE ordering SET done = true WHERE id = ?;";
         List<Object> parameters = List.of(15);
 
-        PreparedStatement preparedStatementMock = mock(PreparedStatement.class);
-        SQLException sqlExceptionMock = mock(SQLException.class);
+        var preparedStatementMock = mock(PreparedStatement.class);
+        var sqlExceptionMock = mock(SQLException.class);
 
         // when / then
         when(connectionMock.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS))
@@ -120,17 +105,14 @@ class JdbcTemplateImplTest {
         assertThrows(DatabaseException.class, () -> template.update(connectionMock, sql, parameters));
     }
 
-    /**
-     * Test for {@link JdbcTemplateImpl#update(Connection, String, List)}
-     */
     @Test
     public void updateWhenUnableToExecuteUpdateStatement() throws Exception {
         // given
-        Connection connectionMock = mock(Connection.class);
-        String sql = "UPDATE ordering SET done = true WHERE id = ?;";
+        var connectionMock = mock(Connection.class);
+        var sql = "UPDATE ordering SET done = true WHERE id = ?;";
         List<Object> parameters = List.of(15);
 
-        PreparedStatement preparedStatementMock = mock(PreparedStatement.class);
+        var preparedStatementMock = mock(PreparedStatement.class);
 
         // when / then
         when(connectionMock.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS))
@@ -142,17 +124,14 @@ class JdbcTemplateImplTest {
         assertThrows(DatabaseException.class, () -> template.update(connectionMock, sql, parameters));
     }
 
-    /**
-     * Test for {@link JdbcTemplateImpl#update(Connection, String, List)}
-     */
     @Test
     public void updateWhenUnableToGetGeneratedKeys() throws Exception {
         // given
-        Connection connectionMock = mock(Connection.class);
-        String sql = "UPDATE ordering SET done = true WHERE id = ?;";
+        var connectionMock = mock(Connection.class);
+        var sql = "UPDATE ordering SET done = true WHERE id = ?;";
         List<Object> parameters = List.of(15);
 
-        PreparedStatement preparedStatementMock = mock(PreparedStatement.class);
+        var preparedStatementMock = mock(PreparedStatement.class);
 
         // when / then
         when(connectionMock.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS))
@@ -164,18 +143,15 @@ class JdbcTemplateImplTest {
         assertThrows(DatabaseException.class, () -> template.update(connectionMock, sql, parameters));
     }
 
-    /**
-     * Test for {@link JdbcTemplateImpl#update(Connection, String, List)}
-     */
     @Test
     public void updateWhenUnableToGetNextReturnedValue() throws Exception {
         // given
-        Connection connectionMock = mock(Connection.class);
-        String sql = "UPDATE ordering SET done = true WHERE id = ?;";
+        var connectionMock = mock(Connection.class);
+        var sql = "UPDATE ordering SET done = true WHERE id = ?;";
         List<Object> parameters = List.of(15);
 
-        PreparedStatement preparedStatementMock = mock(PreparedStatement.class);
-        ResultSet resultSetMock = mock(ResultSet.class);
+        var preparedStatementMock = mock(PreparedStatement.class);
+        var resultSetMock = mock(ResultSet.class);
 
         // when / then
         when(connectionMock.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS))
@@ -190,18 +166,15 @@ class JdbcTemplateImplTest {
         assertThrows(DatabaseException.class, () -> template.update(connectionMock, sql, parameters));
     }
 
-    /**
-     * Test for {@link JdbcTemplateImpl#update(Connection, String, List)}
-     */
     @Test
     public void updateWhenUnableToGetNextReturnedValueAsLong() throws Exception {
         // given
-        Connection connectionMock = mock(Connection.class);
-        String sql = "UPDATE ordering SET done = true WHERE id = ?;";
+        var connectionMock = mock(Connection.class);
+        var sql = "UPDATE ordering SET done = true WHERE id = ?;";
         List<Object> parameters = List.of(15);
 
-        PreparedStatement preparedStatementMock = mock(PreparedStatement.class);
-        ResultSet resultSetMock = mock(ResultSet.class);
+        var preparedStatementMock = mock(PreparedStatement.class);
+        var resultSetMock = mock(ResultSet.class);
 
         // when / then
         when(connectionMock.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS))
@@ -216,14 +189,11 @@ class JdbcTemplateImplTest {
         assertThrows(DatabaseException.class, () -> template.update(connectionMock, sql, parameters));
     }
 
-    /**
-     * Test for {@link JdbcTemplateImpl#select(Connection, String, List, Function)}
-     */
     @Test
     public void select() throws Exception {
         // given
-        Connection connectionMock = mock(Connection.class);
-        String sql = "SELECT user_name FROM ordering WHERE id = ?;";
+        var connectionMock = mock(Connection.class);
+        var sql = "SELECT user_name FROM ordering WHERE id = ?;";
         List<Object> parameters = List.of(15);
         Function<ResultSet, String> handler = (resultSet) -> "Alex";
 
@@ -254,14 +224,11 @@ class JdbcTemplateImplTest {
         assertEquals(expectedReturnValue, result);
     }
 
-    /**
-     * Test for {@link JdbcTemplateImpl#select(Connection, String, List, Function)}
-     */
     @Test
     public void selectWhenUnableToCreatePreparedStatement() throws Exception {
         // given
-        Connection connectionMock = mock(Connection.class);
-        String sql = "SELECT user_name FROM ordering WHERE id = ?;";
+        var connectionMock = mock(Connection.class);
+        var sql = "SELECT user_name FROM ordering WHERE id = ?;";
         List<Object> parameters = List.of(15);
         Function<ResultSet, String> handler = (resultSet) -> "Alex";
 
@@ -272,19 +239,16 @@ class JdbcTemplateImplTest {
         assertThrows(DatabaseException.class, () -> template.select(connectionMock, sql, parameters, handler));
     }
 
-    /**
-     * Test for {@link JdbcTemplateImpl#select(Connection, String, List, Function)}
-     */
     @Test
     public void selectWhenUnableToPrepareParametersToStatement() throws Exception {
         // given
-        Connection connectionMock = mock(Connection.class);
-        String sql = "SELECT user_name FROM ordering WHERE id = ?;";
+        var connectionMock = mock(Connection.class);
+        var sql = "SELECT user_name FROM ordering WHERE id = ?;";
         List<Object> parameters = List.of(15);
         Function<ResultSet, String> handler = (resultSet) -> "Alex";
 
-        PreparedStatement preparedStatementMock = mock(PreparedStatement.class);
-        SQLException sqlExceptionMock = mock(SQLException.class);
+        var preparedStatementMock = mock(PreparedStatement.class);
+        var sqlExceptionMock = mock(SQLException.class);
 
         // when / then
         when(connectionMock.prepareStatement(sql))
@@ -297,18 +261,15 @@ class JdbcTemplateImplTest {
         assertThrows(DatabaseException.class, () -> template.select(connectionMock, sql, parameters, handler));
     }
 
-    /**
-     * Test for {@link JdbcTemplateImpl#select(Connection, String, List, Function)}
-     */
     @Test
     public void selectWhenUnableToExecuteQuery() throws Exception {
         // given
-        Connection connectionMock = mock(Connection.class);
-        String sql = "SELECT user_name FROM ordering WHERE id = ?;";
+        var connectionMock = mock(Connection.class);
+        var sql = "SELECT user_name FROM ordering WHERE id = ?;";
         List<Object> parameters = List.of(15);
         Function<ResultSet, String> handler = (resultSet) -> "Alex";
 
-        PreparedStatement preparedStatementMock = mock(PreparedStatement.class);
+        var preparedStatementMock = mock(PreparedStatement.class);
 
         // when / then
         when(connectionMock.prepareStatement(sql))

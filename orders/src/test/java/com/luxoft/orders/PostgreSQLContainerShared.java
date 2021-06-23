@@ -11,11 +11,11 @@ import org.testcontainers.containers.PostgreSQLContainer;
  * @since   2021-06-23
  */
 public class PostgreSQLContainerShared extends PostgreSQLContainer<PostgreSQLContainerShared> {
-    private static final String IMAGE_VERSION = "postgres:12.2";
+    private static final String IMAGE = "postgres:12.2";
     private static PostgreSQLContainerShared container;
 
     private PostgreSQLContainerShared() {
-        super(IMAGE_VERSION);
+        super(IMAGE);
     }
 
     public static PostgreSQLContainerShared getInstance() {

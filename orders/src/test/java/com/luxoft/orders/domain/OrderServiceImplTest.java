@@ -22,7 +22,6 @@ import static org.mockito.Mockito.*;
 class OrderServiceImplTest {
     private TransactionRunner transactionRunnerMock;
     private OrderRepository orderRepositoryMock;
-
     private OrderServiceImpl service;
 
     @BeforeEach

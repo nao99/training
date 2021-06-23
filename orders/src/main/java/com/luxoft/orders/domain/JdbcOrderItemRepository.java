@@ -62,8 +62,8 @@ public class JdbcOrderItemRepository implements OrderItemRepository {
             try {
                 List<OrderItem> itemsList = new ArrayList<>();
                 while (rs.next()) {
-                    OrderItem item = assemblyOrderItemFromResultSet(rs);
-                    itemsList.add(item);
+                    var orderItem = assemblyOrderItemFromResultSet(rs);
+                    itemsList.add(orderItem);
                 }
 
                 return itemsList;

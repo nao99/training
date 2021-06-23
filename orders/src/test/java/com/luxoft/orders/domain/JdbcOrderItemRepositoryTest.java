@@ -164,7 +164,7 @@ class JdbcOrderItemRepositoryTest {
 
             assertTrue(selectedOrderItemOptional.isPresent());
 
-            OrderItem selectedOrderItem = selectedOrderItemOptional.get();
+            var selectedOrderItem = selectedOrderItemOptional.get();
 
             assertEquals(createdOrderItem.getId(), selectedOrderItem.getId());
             assertEquals(createdOrderItem.getOrderId(), selectedOrderItem.getOrderId());

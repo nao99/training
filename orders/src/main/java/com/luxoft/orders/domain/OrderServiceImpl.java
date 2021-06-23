@@ -59,13 +59,13 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public void doneAllOrders() {
         transactionRunner.run(connection -> {
-            long ordersCount = repository.countNonDone(connection);
+            var ordersCount = repository.countNonDone(connection);
             if (ordersCount == 0) {
                 return 0;
             }
 
-            long ordersDoneCount = 0;
-            int batchSize = 100;
+            var ordersDoneCount = 0L;
+            var batchSize = 100;
 
             while (ordersDoneCount < ordersCount) {
                 repository.doneAllNonDoneOrdersBatched(connection, batchSize);
