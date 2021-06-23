@@ -43,13 +43,13 @@ class OrderServiceImplTest {
         var connectionMock = mock(Connection.class);
 
         // when
-        when(orderRepositoryMock.findById(connectionMock, orderId))
+        when(orderRepositoryMock.findById(connectionMock, orderId, null))
             .thenReturn(Optional.of(expectedOrder));
 
-        var foundOrder = service.getOrder(orderId);
+        var foundOrder = service.getOrder(orderId, null);
 
         verify(orderRepositoryMock, times(1))
-            .findById(connectionMock, orderId);
+            .findById(connectionMock, orderId, null);
 
         // then
         assertSame(expectedOrder, foundOrder);
@@ -63,13 +63,13 @@ class OrderServiceImplTest {
         var connectionMock = mock(Connection.class);
 
         // when
-        when(orderRepositoryMock.findById(connectionMock, orderId))
+        when(orderRepositoryMock.findById(connectionMock, orderId, null))
             .thenReturn(Optional.empty());
 
-        assertThrows(OrderNotFoundException.class, () -> service.getOrder(orderId));
+        assertThrows(OrderNotFoundException.class, () -> service.getOrder(orderId, null));
 
         verify(orderRepositoryMock, times(1))
-            .findById(connectionMock, orderId);
+            .findById(connectionMock, orderId, null);
     }
 
     @Test

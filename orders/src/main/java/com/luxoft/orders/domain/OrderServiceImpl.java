@@ -4,6 +4,7 @@ import com.luxoft.orders.api.CreateOrderDto;
 import com.luxoft.orders.api.CreateOrderItemDto;
 import com.luxoft.orders.domain.model.Order;
 import com.luxoft.orders.domain.model.OrderItem;
+import com.luxoft.orders.persistent.LockMode;
 import com.luxoft.orders.persistent.transaction.TransactionRunner;
 
 /**
@@ -23,8 +24,8 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Order getOrder(Long id) throws OrderNotFoundException {
-        return transactionRunner.run(connection -> repository.findById(connection, id)
+    public Order getOrder(Long id, LockMode mode) throws OrderNotFoundException {
+        return transactionRunner.run(connection -> repository.findById(connection, id, mode)
             .orElseThrow(() -> new OrderNotFoundException(String.format("Order %d id not found", id)))
         );
     }

@@ -2,6 +2,7 @@ package com.luxoft.orders.domain;
 
 import com.luxoft.orders.domain.model.Order;
 import com.luxoft.orders.persistent.DataAccessException;
+import com.luxoft.orders.persistent.LockMode;
 
 import java.sql.Connection;
 import java.util.Optional;
@@ -19,11 +20,12 @@ public interface OrderRepository {
      *
      * @param connection a connection
      * @param id         an order id
+     * @param mode       a locking mode (optional)
      *
      * @return an order if exists
      * @throws DataAccessException if something was wrong
      */
-    Optional<Order> findById(Connection connection, Long id) throws DataAccessException;
+    Optional<Order> findById(Connection connection, Long id, LockMode mode) throws DataAccessException;
 
     /**
      * Saves an {@link Order}

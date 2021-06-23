@@ -61,7 +61,7 @@ class JdbcOrderRepositoryTest {
             var createdOrder = orderRepository.save(connection, order);
 
             // when / then
-            var selectedOrderOptional = orderRepository.findById(connection, createdOrder.getId());
+            var selectedOrderOptional = orderRepository.findById(connection, createdOrder.getId(), null);
             assertTrue(selectedOrderOptional.isPresent());
 
             var selectedOrderId = selectedOrderOptional.get().getId();
@@ -78,7 +78,7 @@ class JdbcOrderRepositoryTest {
         // given
         try (var connection = dataSource.getConnection()) {
             // when
-            var selectedOrderOptional = orderRepository.findById(connection, -1L);
+            var selectedOrderOptional = orderRepository.findById(connection, -1L, null);
 
             verify(orderItemRepositoryMock, never())
                 .findByOrderId(connection, eq(anyLong()));
@@ -191,9 +191,9 @@ class JdbcOrderRepositoryTest {
             // when
             orderRepository.doneAllNonDoneOrdersBatched(connection, 15);
 
-            var selectedOrder1 = orderRepository.findById(connection, createdOrder1.getId()).orElseThrow();
-            var selectedOrder2 = orderRepository.findById(connection, createdOrder2.getId()).orElseThrow();
-            var selectedOrder3 = orderRepository.findById(connection, createdOrder3.getId()).orElseThrow();
+            var selectedOrder1 = orderRepository.findById(connection, createdOrder1.getId(), null).orElseThrow();
+            var selectedOrder2 = orderRepository.findById(connection, createdOrder2.getId(), null).orElseThrow();
+            var selectedOrder3 = orderRepository.findById(connection, createdOrder3.getId(), null).orElseThrow();
 
             // then
             assertTrue(selectedOrder1.isDone());

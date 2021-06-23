@@ -4,6 +4,7 @@ import com.luxoft.orders.domain.model.Order;
 import com.luxoft.orders.domain.model.OrderItem;
 import com.luxoft.orders.persistent.DataAccessException;
 import com.luxoft.orders.persistent.DatabaseException;
+import com.luxoft.orders.persistent.LockMode;
 import com.luxoft.orders.persistent.query.JdbcTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,8 +34,8 @@ public class JdbcOrderRepository implements OrderRepository {
     }
 
     @Override
-    public Optional<Order> findById(Connection connection, Long id) throws DataAccessException {
-        var sql = "SELECT id, user_name, done, updated_at FROM ordering WHERE id = ?;";
+    public Optional<Order> findById(Connection connection, Long id, LockMode mode) throws DataAccessException {
+        var sql = buildSqlForOrderSelection(mode);
         try {
             return jdbcTemplate.select(connection, sql, List.of(id), rs -> {
                 try {
@@ -120,6 +121,17 @@ public class JdbcOrderRepository implements OrderRepository {
             "WHERE ordering.id = non_done_orders.id;";
 
         jdbcTemplate.update(connection, sql, List.of(batchSize));
+    }
+
+    private String buildSqlForOrderSelection(LockMode mode) {
+        var stringBuilder = new StringBuilder("SELECT id, user_name, done, updated_at FROM ordering WHERE id = ?");
+        if (mode == LockMode.PESSIMISTIC_WRITE) {
+            stringBuilder.append(" FOR UPDATE");
+        }
+
+        stringBuilder.append(";");
+
+        return stringBuilder.toString();
     }
 
     private boolean isNew(Order order) {

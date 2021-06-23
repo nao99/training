@@ -4,6 +4,7 @@ import com.luxoft.orders.api.CreateOrderDto;
 import com.luxoft.orders.api.CreateOrderItemDto;
 import com.luxoft.orders.domain.model.Order;
 import com.luxoft.orders.domain.model.OrderItem;
+import com.luxoft.orders.persistent.LockMode;
 
 /**
  * OrderService interface
@@ -16,12 +17,13 @@ public interface OrderService {
     /**
      * Gets an {@link Order}
      *
-     * @param id an order id
+     * @param id   an order id
+     * @param mode a locking mode (optional)
      *
      * @return an order if exists
      * @throws OrderNotFoundException if order was not found
      */
-    Order getOrder(Long id) throws OrderNotFoundException;
+    Order getOrder(Long id, LockMode mode) throws OrderNotFoundException;
 
     /**
      * Creates a new {@link Order}
