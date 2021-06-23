@@ -1,7 +1,7 @@
 package com.luxoft.orders.domain;
 
 import com.luxoft.orders.api.CreateOrderDto;
-import com.luxoft.orders.api.OrderItemDto;
+import com.luxoft.orders.api.CreateOrderItemDto;
 import com.luxoft.orders.domain.model.Order;
 import com.luxoft.orders.domain.model.OrderItem;
 
@@ -29,18 +29,18 @@ public interface OrderService {
      * @param createOrderDto a create order dto
      * @return a new order
      */
-    Order create(CreateOrderDto createOrderDto);
+    Order createOrder(CreateOrderDto createOrderDto);
 
     /**
      * Adds an {@link OrderItem} to an {@link Order}
      *
-     * @param order        an order
-     * @param orderItemDto an order item dto
+     * @param order              an order
+     * @param createOrderItemDto a create order item dto
      */
-    void addOrderItem(Order order, OrderItemDto orderItemDto);
+    void addOrderItem(Order order, CreateOrderItemDto createOrderItemDto);
 
     /**
-     * Changes {@link OrderItem} count
+     * Changes an {@link OrderItem} count
      *
      * @param orderItem an order item
      * @param count     a changeable count
@@ -48,7 +48,7 @@ public interface OrderService {
     void changeOrderItemCount(OrderItem orderItem, int count);
 
     /**
-     * Marks all unmarked {@link Order}s as done
+     * Marks all non done {@link Order}s as done
      */
     void doneAllOrders();
 }

@@ -4,8 +4,8 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -65,7 +65,7 @@ class OrderTest {
      */
     private Order createOrder(Long orderId, Long itemId) {
         OrderItem item = OrderItem.of(itemId, orderId, "Boots", 15, BigDecimal.valueOf(1500L));
-        Set<OrderItem> items = new HashSet<>() {{
+        List<OrderItem> items = new ArrayList<>() {{
             add(item);
         }};
 

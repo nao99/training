@@ -29,21 +29,3 @@ services:
       POSTGRES_DB: ${DB_DATABASE}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-
-  # ------------------------
-  # PostgreSQL database for testing
-  # TODO: move to separately yml file
-  # ------------------------
-  db_test:
-    image: postgres:12.2
-    restart: on-failure
-    networks:
-      main:
-        ipv4_address: 172.50.1.3
-    volumes:
-      - ${LOGS_DIR}/psql_test:/var/log/postgresql
-      - ${VOLUMES_DIR}/psql_test:/var/lib/postgresql/data
-    environment:
-      POSTGRES_DB: ${DB_DATABASE}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}

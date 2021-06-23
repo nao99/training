@@ -1,7 +1,8 @@
 package com.luxoft.orders.domain.model;
 
 import java.time.LocalDateTime;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Order class
@@ -12,16 +13,12 @@ import java.util.Set;
  */
 public class Order {
     private Long id;
-
     private String username;
-
     private boolean done;
-
     private LocalDateTime updatedAt;
+    private final List<OrderItem> items;
 
-    private final Set<OrderItem> items;
-
-    private Order(Long id, String username, boolean done, LocalDateTime updatedAt, Set<OrderItem> items) {
+    private Order(Long id, String username, boolean done, LocalDateTime updatedAt, List<OrderItem> items) {
         this.id = id;
         this.username = username;
         this.done = done;
@@ -29,12 +26,16 @@ public class Order {
         this.items = items;
     }
 
-    public static Order of(Long id, String username, boolean done, LocalDateTime updatedAt, Set<OrderItem> items) {
+    public static Order of(Long id, String username, boolean done, LocalDateTime updatedAt, List<OrderItem> items) {
         return new Order(id, username, done, updatedAt, items);
     }
 
-    public static Order of(String username, Set<OrderItem> items) {
+    public static Order of(String username, List<OrderItem> items) {
         return new Order(null, username, false, LocalDateTime.now(), items);
+    }
+
+    public static Order of(String username) {
+        return new Order(null, username, false, LocalDateTime.now(), new ArrayList<>());
     }
 
     public Long getId() {
@@ -62,7 +63,7 @@ public class Order {
         return updatedAt;
     }
 
-    public Set<OrderItem> getItems() {
+    public List<OrderItem> getItems() {
         return items;
     }
 

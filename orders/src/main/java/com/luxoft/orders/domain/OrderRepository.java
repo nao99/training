@@ -44,5 +44,15 @@ public interface OrderRepository {
      * @return a count of orders
      * @throws DataAccessException if something was wrong
      */
-    long count(Connection connection) throws DataAccessException;
+    long countNonDone(Connection connection) throws DataAccessException;
+
+    /**
+     * Dones all non done {@link Order}s
+     *
+     * @param connection a connection
+     * @param batchSize  a size of batch
+     *
+     * @throws DataAccessException if something was wrong
+     */
+    void doneAllNonDoneOrdersBatched(Connection connection, int batchSize) throws DataAccessException;
 }

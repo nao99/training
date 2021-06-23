@@ -1,9 +1,10 @@
 package com.luxoft.orders.domain;
 
 import com.luxoft.orders.api.CreateOrderDto;
-import com.luxoft.orders.api.OrderItemDto;
+import com.luxoft.orders.api.CreateOrderItemDto;
 import com.luxoft.orders.domain.model.Order;
 import com.luxoft.orders.domain.model.OrderItem;
+import com.luxoft.orders.persistent.transaction.TransactionRunner;
 
 /**
  * OrderServiceImpl class
@@ -13,25 +14,41 @@ import com.luxoft.orders.domain.model.OrderItem;
  * @since   2021-06-22
  */
 public class OrderServiceImpl implements OrderService {
+    private final TransactionRunner transactionRunner;
     private final OrderRepository repository;
 
-    public OrderServiceImpl(OrderRepository repository) {
+    public OrderServiceImpl(TransactionRunner transactionRunner, OrderRepository repository) {
+        this.transactionRunner = transactionRunner;
         this.repository = repository;
     }
 
     @Override
     public Order getOrder(Long id) throws OrderNotFoundException {
-        return null;
+        return transactionRunner.run(connection -> repository.findById(connection, id)
+            .orElseThrow(() -> new OrderNotFoundException(String.format("Order %d id not found", id)))
+        );
     }
 
     @Override
-    public Order create(CreateOrderDto createOrderDto) {
-        return null;
+    public Order createOrder(CreateOrderDto createOrderDto) {
+        var order = Order.of(createOrderDto.getUsername());
+        createOrderDto.getItems()
+            .forEach(item -> order.addItem(OrderItem.of(item.getName(), item.getCount(), item.getPrice())));
+
+        return transactionRunner.run(connection -> repository.save(connection, order));
     }
 
     @Override
-    public void addOrderItem(Order order, OrderItemDto orderItemDto) {
+    public void addOrderItem(Order order, CreateOrderItemDto createOrderItemDto) {
+        var orderItem = OrderItem.of(
+            order.getId(),
+            createOrderItemDto.getName(),
+            createOrderItemDto.getCount(),
+            createOrderItemDto.getPrice()
+        );
 
+        order.addItem(orderItem);
+        transactionRunner.run(connection -> repository.save(connection, order));
     }
 
     @Override
@@ -41,6 +58,21 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public void doneAllOrders() {
+        transactionRunner.run(connection -> {
+            long ordersCount = repository.countNonDone(connection);
+            if (ordersCount == 0) {
+                return 0;
+            }
 
+            long ordersDoneCount = 0;
+            int batchSize = 100;
+
+            while (ordersDoneCount < ordersCount) {
+                repository.doneAllNonDoneOrdersBatched(connection, batchSize);
+                ordersDoneCount += batchSize;
+            }
+
+            return ordersDoneCount;
+        });
     }
 }

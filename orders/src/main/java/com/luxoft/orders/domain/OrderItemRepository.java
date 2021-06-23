@@ -4,8 +4,8 @@ import com.luxoft.orders.domain.model.OrderItem;
 import com.luxoft.orders.persistent.DataAccessException;
 
 import java.sql.Connection;
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * OrderItemRepository interface
@@ -35,7 +35,7 @@ public interface OrderItemRepository {
      * @return a set of order items
      * @throws DataAccessException if something was wrong
      */
-    Set<OrderItem> findByOrderId(Connection connection, Long orderId) throws DataAccessException;
+    List<OrderItem> findByOrderId(Connection connection, Long orderId) throws DataAccessException;
 
     /**
      * Saves an {@link OrderItem}

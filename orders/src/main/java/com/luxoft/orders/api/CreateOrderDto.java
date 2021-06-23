@@ -1,6 +1,6 @@
 package com.luxoft.orders.api;
 
-import java.util.Set;
+import java.util.List;
 
 /**
  * CreateOrderDto class
@@ -11,8 +11,7 @@ import java.util.Set;
  */
 public class CreateOrderDto {
     private String username;
-
-    private Set<CreateOrderItemDto> items;
+    private List<CreateOrderItemDto> items;
 
     public String getUsername() {
         return username;
@@ -22,11 +21,11 @@ public class CreateOrderDto {
         this.username = username;
     }
 
-    public Set<CreateOrderItemDto> getItems() {
+    public List<CreateOrderItemDto> getItems() {
         return items;
     }
 
-    public void setItems(Set<CreateOrderItemDto> items) {
+    public void setItems(List<CreateOrderItemDto> items) {
         this.items = items;
     }
 }

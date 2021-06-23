@@ -7,7 +7,7 @@ package com.luxoft.orders.domain;
  * @version 1.0.0
  * @since   2021-06-18
  */
-public class OrderException extends Exception {
+public class OrderException extends RuntimeException {
     public OrderException(String message) {
         super(message);
     }

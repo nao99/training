@@ -11,9 +11,7 @@ import java.math.BigDecimal;
  */
 public class CreateOrderItemDto {
     private String name;
-
     private int count;
-
     private BigDecimal price;
 
     public String getName() {

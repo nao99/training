@@ -1,6 +1,8 @@
 package com.luxoft.orders.persistent.transaction;
 
 import com.luxoft.orders.persistent.DatabaseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
@@ -14,6 +16,7 @@ import java.util.concurrent.Callable;
  * @since   2021-06-21
  */
 public class JdbcTransactionRunner implements TransactionRunner {
+    private static final Logger logger = LoggerFactory.getLogger(JdbcTransactionRunner.class);
     private final DataSource dataSource;
 
     public JdbcTransactionRunner(DataSource dataSource) {
@@ -30,7 +33,9 @@ public class JdbcTransactionRunner implements TransactionRunner {
 
                     return result;
                 } catch (SQLException e) {
-                    String errorMessage = String.format("Unable to execute an operation: \"%s\"", e.getMessage());
+                    var errorMessage = String.format("Unable to execute an operation: \"%s\"", e.getMessage());
+                    logger.error(errorMessage);
+
                     connection.rollback();
 
                     throw new DatabaseException(errorMessage, e);
@@ -52,7 +57,7 @@ public class JdbcTransactionRunner implements TransactionRunner {
         try {
             return operation.call();
         } catch (Exception e) {
-            String errorMessage = String.format("Unable to execute an operation: \"%s\"", e.getMessage());
+            var errorMessage = String.format("Unable to execute an operation: \"%s\"", e.getMessage());
             throw new DatabaseException(errorMessage, e);
         }
     }

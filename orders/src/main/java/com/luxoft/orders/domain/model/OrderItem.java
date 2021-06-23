@@ -1,7 +1,7 @@
 package com.luxoft.orders.domain.model;
 
 import java.math.BigDecimal;
-import java.util.Objects;
+import java.math.RoundingMode;
 
 /**
  * OrderItem class
@@ -12,13 +12,9 @@ import java.util.Objects;
  */
 public class OrderItem {
     private Long id;
-
     private Long orderId;
-
     private String itemName;
-
     private int count;
-
     private BigDecimal price;
 
     private OrderItem(Long id, Long orderId, String itemName, int count, BigDecimal price) {
@@ -31,6 +27,10 @@ public class OrderItem {
 
     public static OrderItem of(Long id, Long orderId, String itemName, int count, BigDecimal price) {
         return new OrderItem(id, orderId, itemName, count, price);
+    }
+
+    public static OrderItem of(Long orderId, String itemName, int count, BigDecimal price) {
+        return new OrderItem(null, orderId, itemName, count, price);
     }
 
     public static OrderItem of(String itemName, int count, BigDecimal price) {
@@ -66,28 +66,19 @@ public class OrderItem {
     }
 
     /**
-     * {@inheritDoc}
+     * Changes a count of this item
+     *
+     * @param newCount a changeable count
      */
-    @Override
-    public boolean equals(Object other) {
-        if (null == other) {
-            return false;
+    public void changeCount(int newCount) {
+        if (newCount == count) {
+            return;
         }
 
-        if (!other.getClass().isAssignableFrom(OrderItem.class)) {
-            return false;
-        }
+        var pricePerOneItem = price.divide(BigDecimal.valueOf(count), RoundingMode.DOWN);
+        var newPrice = pricePerOneItem.multiply(BigDecimal.valueOf(newCount));
 
-        OrderItem otherOrderItem = (OrderItem) other;
-
-        return Objects.equals(this.id, otherOrderItem.id);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(id);
+        count = newCount;
+        price = newPrice;
     }
 }
