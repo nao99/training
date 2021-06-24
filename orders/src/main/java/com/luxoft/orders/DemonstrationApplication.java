@@ -5,6 +5,7 @@ import com.luxoft.orders.api.CreateOrderItemDto;
 import com.luxoft.orders.domain.JdbcOrderItemRepository;
 import com.luxoft.orders.domain.JdbcOrderRepository;
 import com.luxoft.orders.domain.OrderServiceImpl;
+import com.luxoft.orders.persistent.migration.FlywayMigrationsExecutor;
 import com.luxoft.orders.persistent.query.JdbcTemplateImpl;
 import com.luxoft.orders.persistent.transaction.JdbcTransactionRunner;
 import com.zaxxer.hikari.HikariDataSource;
@@ -20,14 +21,20 @@ import java.util.List;
  * @since   2021-06-24
  */
 public class DemonstrationApplication {
+    private static final String DB_URL = "jdbc:postgresql://172.50.1.2/app";
+    private static final String DB_USERNAME = "dbuser";
+    private static final String DB_PASSWORD = "dbuser";
+
     public static void main(String[] args) {
         // 0. Preparation
         HikariDataSource dataSource = new HikariDataSource();
 
         dataSource.setAutoCommit(false);
-        dataSource.setUsername("dbuser");
-        dataSource.setPassword("dbuser");
-        dataSource.setJdbcUrl("jdbc:postgresql://172.50.1.2/app");
+        dataSource.setJdbcUrl(DB_URL);
+        dataSource.setUsername(DB_USERNAME);
+        dataSource.setPassword(DB_PASSWORD);
+
+        FlywayMigrationsExecutor.execute(DB_URL, DB_USERNAME, DB_PASSWORD);
 
         var jdbcTemplate = new JdbcTemplateImpl();
         var jdbcTransactionRunner = new JdbcTransactionRunner(dataSource);
