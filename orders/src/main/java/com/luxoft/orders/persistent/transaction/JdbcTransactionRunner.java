@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
-import java.util.concurrent.Callable;
 
 /**
  * JdbcTransactionRunner class
@@ -25,7 +24,7 @@ public class JdbcTransactionRunner implements TransactionRunner {
 
     @Override
     public <T> T run(TransactionOperation<T> operation) throws DatabaseException {
-        return wrapException(() -> {
+        try {
             try (var connection = dataSource.getConnection()) {
                 try {
                     var result = operation.apply(connection);
@@ -33,31 +32,14 @@ public class JdbcTransactionRunner implements TransactionRunner {
 
                     return result;
                 } catch (SQLException e) {
-                    var errorMessage = String.format("Unable to execute an operation: \"%s\"", e.getMessage());
-
-                    logger.error(errorMessage);
                     connection.rollback();
-
-                    throw new DatabaseException(errorMessage, e);
+                    throw e;
                 }
             }
-        });
-    }
-
-    /**
-     * Wraps passed operation in try catch block
-     * for convenient exception handling
-     *
-     * @param operation a callable operation
-     *
-     * @return an operation result
-     * @throws DatabaseException if something was wrong
-     */
-    private <T> T wrapException(Callable<T> operation) throws DatabaseException {
-        try {
-            return operation.call();
-        } catch (Exception e) {
+        } catch (SQLException e) {
             var errorMessage = String.format("Unable to execute an operation: \"%s\"", e.getMessage());
+            logger.error(errorMessage);
+
             throw new DatabaseException(errorMessage, e);
         }
     }

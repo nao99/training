@@ -3,6 +3,7 @@ package com.luxoft.orders.domain;
 import com.luxoft.orders.PostgreSQLContainerShared;
 import com.luxoft.orders.domain.model.Order;
 import com.luxoft.orders.domain.model.OrderItem;
+import com.luxoft.orders.persistent.DatabaseException;
 import com.luxoft.orders.persistent.query.JdbcTemplate;
 import com.luxoft.orders.persistent.query.JdbcTemplateImpl;
 import com.zaxxer.hikari.HikariDataSource;
@@ -13,7 +14,6 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import javax.sql.DataSource;
 import java.math.BigDecimal;
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -26,8 +26,8 @@ import static org.junit.jupiter.api.Assertions.*;
  * @since   2021-06-23
  */
 class JdbcOrderItemRepositoryTest {
-    private static final PostgreSQLContainer<PostgreSQLContainerShared> POSTGRESQL_CONTAINER
-        = PostgreSQLContainerShared.getInstance();
+    private static final PostgreSQLContainer<PostgreSQLContainerShared> POSTGRESQL_CONTAINER =
+        PostgreSQLContainerShared.getInstance();
 
     static {
         POSTGRESQL_CONTAINER.start();
@@ -40,9 +40,11 @@ class JdbcOrderItemRepositoryTest {
     @BeforeEach
     public void setUp() throws Exception {
         var hikariDataSource = new HikariDataSource();
+
         hikariDataSource.setJdbcUrl(POSTGRESQL_CONTAINER.getJdbcUrl());
         hikariDataSource.setUsername(POSTGRESQL_CONTAINER.getUsername());
         hikariDataSource.setPassword(POSTGRESQL_CONTAINER.getPassword());
+        hikariDataSource.setMaximumPoolSize(2);
 
         dataSource = hikariDataSource;
         jdbcTemplate = new JdbcTemplateImpl();
@@ -79,6 +81,27 @@ class JdbcOrderItemRepositoryTest {
     }
 
     @Test
+    public void findByIdAndTryToDelete() throws Exception {
+        // given
+        try (var connection = dataSource.getConnection()) {
+            var order = createOrder(connection);
+            var orderItem = OrderItem.of(order.getId(), "Shoes", 12, BigDecimal.valueOf(1200L));
+
+            var createdOrderItem = repository.save(connection, orderItem);
+            var orderItemId = createdOrderItem.getId();
+
+            // when / then
+            var selectedOrderItemOptional = repository.findById(connection, orderItemId);
+
+            assertTrue(selectedOrderItemOptional.isPresent());
+            assertThrows(
+                DatabaseException.class,
+                () -> jdbcTemplate.update(connection, "DELETE ordering_items WHERE id = ?;", List.of(orderItemId))
+            );
+        }
+    }
+
+    @Test
     public void findByOrderId() throws Exception {
         // given
         try (var connection = dataSource.getConnection()) {
@@ -106,22 +129,10 @@ class JdbcOrderItemRepositoryTest {
             var createdOrderItem = repository.save(connection, orderItem);
             assertNotNull(createdOrderItem.getId());
 
-            var selectedOrderItemOrderId = jdbcTemplate.select(
-                connection,
-                "SELECT ordering_id FROM ordering_items WHERE id = ?;",
-                List.of(createdOrderItem.getId()),
-                (rs) -> {
-                    try {
-                        rs.next();
-                        return rs.getLong("ordering_id");
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e.getMessage(), e);
-                    }
-                }
-            );
+            var selectedOrderItemOptional = repository.findById(connection, createdOrderItem.getId());
 
-            assertTrue(selectedOrderItemOrderId.isPresent());
-            assertEquals(order.getId(), selectedOrderItemOrderId.get());
+            assertTrue(selectedOrderItemOptional.isPresent());
+            assertEquals(createdOrderItem.getId(), selectedOrderItemOptional.get().getId());
         }
     }
 
@@ -142,26 +153,7 @@ class JdbcOrderItemRepositoryTest {
             var updatedOrderItem = repository.save(connection, createdOrderItem);
 
             // when / then
-            var selectedOrderItemOptional = jdbcTemplate.select(
-                connection,
-                "SELECT id, ordering_id, item_name, item_count, item_price FROM ordering_items WHERE id = ?;",
-                List.of(updatedOrderItem.getId()),
-                (rs) -> {
-                    try {
-                        rs.next();
-                        return OrderItem.of(
-                            rs.getLong("id"),
-                            rs.getLong("ordering_id"),
-                            rs.getString("item_name"),
-                            rs.getInt("item_count"),
-                            rs.getBigDecimal("item_price")
-                        );
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e.getMessage(), e);
-                    }
-                }
-            );
-
+            var selectedOrderItemOptional = repository.findById(connection, updatedOrderItem.getId());
             assertTrue(selectedOrderItemOptional.isPresent());
 
             var selectedOrderItem = selectedOrderItemOptional.get();

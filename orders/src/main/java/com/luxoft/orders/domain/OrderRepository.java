@@ -2,7 +2,6 @@ package com.luxoft.orders.domain;
 
 import com.luxoft.orders.domain.model.Order;
 import com.luxoft.orders.persistent.DataAccessException;
-import com.luxoft.orders.persistent.LockMode;
 
 import java.sql.Connection;
 import java.util.Optional;
@@ -20,12 +19,23 @@ public interface OrderRepository {
      *
      * @param connection a connection
      * @param id         an order id
-     * @param mode       a locking mode (optional)
      *
      * @return an order if exists
      * @throws DataAccessException if something was wrong
      */
-    Optional<Order> findById(Connection connection, Long id, LockMode mode) throws DataAccessException;
+    Optional<Order> findById(Connection connection, Long id) throws DataAccessException;
+
+    /**
+     * Checks if an {@link Order} exists
+     * Blocks this order in a table
+     *
+     * @param connection a connection
+     * @param id         an order id
+     *
+     * @return true if exists or false else
+     * @throws DataAccessException if something was wrong
+     */
+    boolean existsById(Connection connection, Long id) throws DataAccessException;
 
     /**
      * Saves an {@link Order}
@@ -39,6 +49,16 @@ public interface OrderRepository {
     Order save(Connection connection, Order order) throws DataAccessException;
 
     /**
+     * Updates an {@link Order} timestamp
+     *
+     * @param connection a connection
+     * @param orderId    an order id
+     *
+     * @throws DataAccessException if something was wrong
+     */
+    void updateOrderTimestamp(Connection connection, Long orderId) throws DataAccessException;
+
+    /**
      * Finds a count of {@link Order}s
      *
      * @param connection a connection
@@ -49,7 +69,7 @@ public interface OrderRepository {
     long countNonDone(Connection connection) throws DataAccessException;
 
     /**
-     * Dones all non done {@link Order}s
+     * Marks as done all non done {@link Order}s
      *
      * @param connection a connection
      * @param batchSize  a size of batch

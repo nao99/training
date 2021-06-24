@@ -3,6 +3,7 @@ package com.luxoft.orders.domain;
 import com.luxoft.orders.PostgreSQLContainerShared;
 import com.luxoft.orders.domain.model.Order;
 import com.luxoft.orders.domain.model.OrderItem;
+import com.luxoft.orders.persistent.DatabaseException;
 import com.luxoft.orders.persistent.query.JdbcTemplate;
 import com.luxoft.orders.persistent.query.JdbcTemplateImpl;
 import com.zaxxer.hikari.HikariDataSource;
@@ -13,7 +14,6 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import javax.sql.DataSource;
 
 import java.math.BigDecimal;
-import java.sql.SQLException;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -42,9 +42,11 @@ class JdbcOrderRepositoryTest {
     @BeforeEach
     public void setUp() throws Exception {
         var hikariDataSource = new HikariDataSource();
+
         hikariDataSource.setJdbcUrl(POSTGRESQL_CONTAINER.getJdbcUrl());
         hikariDataSource.setUsername(POSTGRESQL_CONTAINER.getUsername());
         hikariDataSource.setPassword(POSTGRESQL_CONTAINER.getPassword());
+        hikariDataSource.setMaximumPoolSize(2);
 
         dataSource = hikariDataSource;
         jdbcTemplate = new JdbcTemplateImpl();
@@ -61,7 +63,7 @@ class JdbcOrderRepositoryTest {
             var createdOrder = orderRepository.save(connection, order);
 
             // when / then
-            var selectedOrderOptional = orderRepository.findById(connection, createdOrder.getId(), null);
+            var selectedOrderOptional = orderRepository.findById(connection, createdOrder.getId());
             assertTrue(selectedOrderOptional.isPresent());
 
             var selectedOrderId = selectedOrderOptional.get().getId();
@@ -78,13 +80,60 @@ class JdbcOrderRepositoryTest {
         // given
         try (var connection = dataSource.getConnection()) {
             // when
-            var selectedOrderOptional = orderRepository.findById(connection, -1L, null);
+            var selectedOrderOptional = orderRepository.findById(connection, -1L);
 
             verify(orderItemRepositoryMock, never())
                 .findByOrderId(connection, eq(anyLong()));
 
             // then
             assertTrue(selectedOrderOptional.isEmpty());
+        }
+    }
+
+    @Test
+    public void existsByIdWhenOrderExists() throws Exception {
+        // given
+        var order = Order.of("Alex");
+
+        try (var connection = dataSource.getConnection()) {
+            var createdOrder = orderRepository.save(connection, order);
+
+            // when
+            var orderExists = orderRepository.existsById(connection, createdOrder.getId());
+
+            // then
+            assertTrue(orderExists);
+        }
+    }
+
+    @Test
+    public void existsByIdWhenOrderNotExists() throws Exception {
+        // given
+        try (var connection = dataSource.getConnection()) {
+            // when
+            var orderExists = orderRepository.existsById(connection, -1L);
+
+            // then
+            assertFalse(orderExists);
+        }
+    }
+
+    @Test
+    public void existsByIdWhenOrderExistsAndTryToDelete() throws Exception {
+        // given
+        var order = Order.of("Alex");
+
+        try (var connection = dataSource.getConnection()) {
+            var createdOrder = orderRepository.save(connection, order);
+
+            // when / then
+            var orderExists = orderRepository.existsById(connection, createdOrder.getId());
+
+            assertTrue(orderExists);
+            assertThrows(
+                DatabaseException.class,
+                () -> jdbcTemplate.update(connection, "DELETE ordering WHERE id = ?;", List.of(createdOrder.getId()))
+            );
         }
     }
 
@@ -112,22 +161,15 @@ class JdbcOrderRepositoryTest {
             assertNotNull(createdOrder.getId());
             assertNotNull(createdOrderItem.getOrderId());
 
-            var selectedOrderUsernameOptional = jdbcTemplate.select(
-                connection,
-                "SELECT id, user_name, done, updated_at FROM ordering WHERE id = ?;",
-                List.of(createdOrder.getId()),
-                (rs) -> {
-                    try {
-                        rs.next();
-                        return rs.getString("user_name");
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e.getMessage(), e);
-                    }
-                }
-            );
+            var selectedOrderOptional = orderRepository.findById(connection, createdOrder.getId());
+            assertTrue(selectedOrderOptional.isPresent());
 
-            assertTrue(selectedOrderUsernameOptional.isPresent());
-            assertEquals(order.getUsername(), selectedOrderUsernameOptional.get());
+            var selectedOrder = selectedOrderOptional.get();
+
+            assertNotNull(selectedOrder.getId());
+            assertEquals(order.getUsername(), selectedOrder.getUsername());
+            assertEquals(order.isDone(), selectedOrder.isDone());
+            assertEquals(order.getUpdatedAt(), selectedOrder.getUpdatedAt());
         }
     }
 
@@ -161,11 +203,28 @@ class JdbcOrderRepositoryTest {
     }
 
     @Test
+    public void updateOrderTimestamp() throws Exception {
+        // given
+        var order = Order.of("Alex");
+        try (var connection = dataSource.getConnection()) {
+            var createdOrder = orderRepository.save(connection, order);
+            var orderUpdatedAt = order.getUpdatedAt();
+
+            // when / then
+            orderRepository.updateOrderTimestamp(connection, createdOrder.getId());
+            var selectedOrder = orderRepository.findById(connection, createdOrder.getId());
+
+            assertTrue(selectedOrder.isPresent());
+            assertTrue(selectedOrder.get().getUpdatedAt().isAfter(orderUpdatedAt));
+        }
+    }
+
+    @Test
     public void countNonDone() throws Exception {
         // given
-        var order1 = Order.of("Alex");
+        var order = Order.of("Alex");
         try (var connection = dataSource.getConnection()) {
-            orderRepository.save(connection, order1);
+            orderRepository.save(connection, order);
 
             // when
             var orderCount = orderRepository.countNonDone(connection);
@@ -191,9 +250,9 @@ class JdbcOrderRepositoryTest {
             // when
             orderRepository.doneAllNonDoneOrdersBatched(connection, 15);
 
-            var selectedOrder1 = orderRepository.findById(connection, createdOrder1.getId(), null).orElseThrow();
-            var selectedOrder2 = orderRepository.findById(connection, createdOrder2.getId(), null).orElseThrow();
-            var selectedOrder3 = orderRepository.findById(connection, createdOrder3.getId(), null).orElseThrow();
+            var selectedOrder1 = orderRepository.findById(connection, createdOrder1.getId()).orElseThrow();
+            var selectedOrder2 = orderRepository.findById(connection, createdOrder2.getId()).orElseThrow();
+            var selectedOrder3 = orderRepository.findById(connection, createdOrder3.getId()).orElseThrow();
 
             // then
             assertTrue(selectedOrder1.isDone());

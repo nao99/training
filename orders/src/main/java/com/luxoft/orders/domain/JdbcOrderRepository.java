@@ -4,7 +4,6 @@ import com.luxoft.orders.domain.model.Order;
 import com.luxoft.orders.domain.model.OrderItem;
 import com.luxoft.orders.persistent.DataAccessException;
 import com.luxoft.orders.persistent.DatabaseException;
-import com.luxoft.orders.persistent.LockMode;
 import com.luxoft.orders.persistent.query.JdbcTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,8 +34,8 @@ public class JdbcOrderRepository implements OrderRepository {
     }
 
     @Override
-    public Optional<Order> findById(Connection connection, Long id, LockMode mode) throws DataAccessException {
-        var sql = buildSqlForOrderSelection(mode);
+    public Optional<Order> findById(Connection connection, Long id) throws DataAccessException {
+        var sql = "SELECT id, user_name, done, updated_at FROM ordering WHERE id = ?;";
         try {
             return jdbcTemplate.select(connection, sql, List.of(id), rs -> {
                 try {
@@ -62,11 +62,28 @@ public class JdbcOrderRepository implements OrderRepository {
     }
 
     @Override
+    public boolean existsById(Connection connection, Long id) throws DataAccessException {
+        var sql = "SELECT EXISTS (SELECT 1 FROM ordering WHERE id = ? FOR UPDATE);";
+        return jdbcTemplate.select(connection, sql, List.of(id), rs -> {
+            try {
+                rs.next();
+                return rs.getBoolean(1);
+            } catch (SQLException e) {
+                var errorMessage = String.format("Unable to check an order existence: \"%s\"", e.getMessage());
+                logger.error(errorMessage);
+
+                throw new DataAccessException(errorMessage, e);
+            }
+        }).orElseThrow(() -> new RuntimeException("Unexpected exception"));
+    }
+
+    @Override
     public Order save(Connection connection, Order order) throws DataAccessException {
         if (!isNew(order)) {
             update(connection, order);
-            order.getItems()
-                .forEach(item -> orderItemRepository.save(connection, item));
+            for (var orderItem : order.getItems()) {
+                orderItemRepository.save(connection, orderItem);
+            }
 
             return order;
         }
@@ -83,6 +100,14 @@ public class JdbcOrderRepository implements OrderRepository {
         }
 
         return createdOrder;
+    }
+
+    @Override
+    public void updateOrderTimestamp(Connection connection, Long orderId) throws DataAccessException {
+        var sql = "UPDATE ordering SET updated_at = ? WHERE id = ?;";
+        var now = LocalDateTime.now();
+
+        jdbcTemplate.update(connection, sql, List.of(now, orderId));
     }
 
     @Override
@@ -121,17 +146,6 @@ public class JdbcOrderRepository implements OrderRepository {
             "WHERE ordering.id = non_done_orders.id;";
 
         jdbcTemplate.update(connection, sql, List.of(batchSize));
-    }
-
-    private String buildSqlForOrderSelection(LockMode mode) {
-        var stringBuilder = new StringBuilder("SELECT id, user_name, done, updated_at FROM ordering WHERE id = ?");
-        if (mode == LockMode.PESSIMISTIC_WRITE) {
-            stringBuilder.append(" FOR UPDATE");
-        }
-
-        stringBuilder.append(";");
-
-        return stringBuilder.toString();
     }
 
     private boolean isNew(Order order) {

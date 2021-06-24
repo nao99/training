@@ -31,7 +31,12 @@ public class JdbcOrderItemRepository implements OrderItemRepository {
 
     @Override
     public Optional<OrderItem> findById(Connection connection, Long id) throws DataAccessException {
-        var sql = "SELECT id, ordering_id, item_name, item_count, item_price FROM ordering_items WHERE id = ?;";
+        var sql =
+            "SELECT id, ordering_id, item_name, item_count, item_price " +
+            "FROM ordering_items " +
+            "WHERE id = ? " +
+            "FOR UPDATE;";
+
         try {
             return jdbcTemplate.select(connection, sql, List.of(id), rs -> {
                 try {

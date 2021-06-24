@@ -32,10 +32,10 @@ class JdbcTransactionRunnerTest {
     @Test
     public void run() throws Exception {
         // given
-        String expectedReturnResult = "Alex";
+        var expectedReturnResult = "Alex";
         TransactionOperation<String> operation = (connection) -> expectedReturnResult;
 
-        Connection connectionMock = mock(Connection.class);
+        var connectionMock = mock(Connection.class);
 
         // when
         when(dataSourceMock.getConnection())
@@ -59,10 +59,8 @@ class JdbcTransactionRunnerTest {
     @Test
     public void runWhenUnableToEstablishConnection() throws Exception {
         // given
-        String expectedReturnResult = "Alex";
+        var expectedReturnResult = "Alex";
         TransactionOperation<String> operation = (connection) -> expectedReturnResult;
-
-        Connection connectionMock = mock(Connection.class);
 
         // when / then
         when(dataSourceMock.getConnection())
@@ -74,11 +72,11 @@ class JdbcTransactionRunnerTest {
     @Test
     public void runWheUnableToCommit() throws Exception {
         // given
-        String expectedReturnResult = "Alex";
+        var expectedReturnResult = "Alex";
         TransactionOperation<String> operation = (connection) -> expectedReturnResult;
 
-        Connection connectionMock = mock(Connection.class);
-        SQLException sqlExceptionMock = mock(SQLException.class);
+        var connectionMock = mock(Connection.class);
+        var sqlExceptionMock = mock(SQLException.class);
 
         // when / then
         when(dataSourceMock.getConnection())
@@ -100,11 +98,11 @@ class JdbcTransactionRunnerTest {
     @Test
     public void runWhenUnableToRollback() throws Exception {
         // given
-        String expectedReturnResult = "Alex";
+        var expectedReturnResult = "Alex";
         TransactionOperation<String> operation = (connection) -> expectedReturnResult;
 
-        Connection connectionMock = mock(Connection.class);
-        SQLException sqlExceptionMock = mock(SQLException.class);
+        var connectionMock = mock(Connection.class);
+        var sqlExceptionMock = mock(SQLException.class);
 
         // when / then
         when(dataSourceMock.getConnection())

@@ -4,7 +4,6 @@ import com.luxoft.orders.api.CreateOrderDto;
 import com.luxoft.orders.api.CreateOrderItemDto;
 import com.luxoft.orders.domain.model.Order;
 import com.luxoft.orders.domain.model.OrderItem;
-import com.luxoft.orders.persistent.LockMode;
 
 /**
  * OrderService interface
@@ -17,13 +16,12 @@ public interface OrderService {
     /**
      * Gets an {@link Order}
      *
-     * @param id   an order id
-     * @param mode a locking mode (optional)
+     * @param id an order id
      *
      * @return an order if exists
      * @throws OrderNotFoundException if order was not found
      */
-    Order getOrder(Long id, LockMode mode) throws OrderNotFoundException;
+    Order getOrder(Long id) throws OrderNotFoundException;
 
     /**
      * Creates a new {@link Order}
@@ -36,18 +34,20 @@ public interface OrderService {
     /**
      * Adds an {@link OrderItem} to an {@link Order}
      *
-     * @param order              an order
+     * @param orderId            an order id
      * @param createOrderItemDto a create order item dto
      */
-    void addOrderItem(Order order, CreateOrderItemDto createOrderItemDto);
+    void addOrderItem(Long orderId, CreateOrderItemDto createOrderItemDto) throws OrderNotFoundException;
 
     /**
      * Changes an {@link OrderItem} count
      *
-     * @param orderItem an order item
-     * @param count     a changeable count
+     * @param orderItemId an order item id
+     * @param count       a changeable count
+     *
+     * @throws OrderItemNotFoundException if order item was not found by passed id
      */
-    void changeOrderItemCount(OrderItem orderItem, int count);
+    void changeOrderItemCount(Long orderItemId, int count) throws OrderItemNotFoundException;
 
     /**
      * Marks all non done {@link Order}s as done

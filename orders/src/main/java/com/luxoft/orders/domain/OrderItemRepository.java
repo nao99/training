@@ -17,6 +17,7 @@ import java.util.Optional;
 public interface OrderItemRepository {
     /**
      * Finds an {@link OrderItem} by id
+     * Blocks this order item in a table
      *
      * @param connection a connection
      * @param id         an order item id
