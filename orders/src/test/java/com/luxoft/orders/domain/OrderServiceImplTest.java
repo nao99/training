@@ -1,6 +1,8 @@
 package com.luxoft.orders.domain;
 
 import com.luxoft.orders.domain.model.Order;
+import com.luxoft.orders.persistent.api.OrderItemRepository;
+import com.luxoft.orders.persistent.api.OrderRepository;
 import com.luxoft.orders.persistent.transaction.TransactionRunner;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -37,7 +39,9 @@ class OrderServiceImplTest {
     public void getOrderWhenOrderExists() throws Exception {
         // given
         var orderId = 1L;
-        var order = Order.of("Alex");
+        var order = Order.builder()
+            .username("Alex")
+            .build();
 
         // when
         var orderResult = service.getOrder(orderId);

@@ -1,4 +1,4 @@
-package com.luxoft.orders.domain;
+package com.luxoft.orders.persistent.api;
 
 import com.luxoft.orders.PostgreSQLContainerShared;
 import com.luxoft.orders.domain.model.Order;
@@ -27,8 +27,8 @@ import static org.mockito.Mockito.*;
  * @since   2021-06-23
  */
 class JdbcOrderRepositoryTest {
-    private static final PostgreSQLContainer<PostgreSQLContainerShared> POSTGRESQL_CONTAINER
-        = PostgreSQLContainerShared.getInstance();
+    private static final PostgreSQLContainer<PostgreSQLContainerShared> POSTGRESQL_CONTAINER =
+        PostgreSQLContainerShared.getInstance();
 
     static {
         POSTGRESQL_CONTAINER.start();
@@ -57,7 +57,9 @@ class JdbcOrderRepositoryTest {
     @Test
     public void findByIdWhenOrderExists() throws Exception {
         // given
-        var order = Order.of("Alex");
+        var order = Order.builder()
+            .username("Alex")
+            .build();
 
         try (var connection = dataSource.getConnection()) {
             var createdOrder = orderRepository.save(connection, order);
@@ -93,13 +95,15 @@ class JdbcOrderRepositoryTest {
     @Test
     public void existsByIdWhenOrderExists() throws Exception {
         // given
-        var order = Order.of("Alex");
+        var order = Order.builder()
+            .username("Alex")
+            .build();
 
         try (var connection = dataSource.getConnection()) {
             var createdOrder = orderRepository.save(connection, order);
 
             // when
-            var orderExists = orderRepository.existsById(connection, createdOrder.getId());
+            var orderExists = orderRepository.checkExistsByIdAndLock(connection, createdOrder.getId());
 
             // then
             assertTrue(orderExists);
@@ -111,7 +115,7 @@ class JdbcOrderRepositoryTest {
         // given
         try (var connection = dataSource.getConnection()) {
             // when
-            var orderExists = orderRepository.existsById(connection, -1L);
+            var orderExists = orderRepository.checkExistsByIdAndLock(connection, -1L);
 
             // then
             assertFalse(orderExists);
@@ -121,13 +125,15 @@ class JdbcOrderRepositoryTest {
     @Test
     public void existsByIdWhenOrderExistsAndTryToDelete() throws Exception {
         // given
-        var order = Order.of("Alex");
+        var order = Order.builder()
+            .username("Alex")
+            .build();
 
         try (var connection = dataSource.getConnection()) {
             var createdOrder = orderRepository.save(connection, order);
 
             // when / then
-            var orderExists = orderRepository.existsById(connection, createdOrder.getId());
+            var orderExists = orderRepository.checkExistsByIdAndLock(connection, createdOrder.getId());
 
             assertTrue(orderExists);
             assertThrows(
@@ -140,9 +146,23 @@ class JdbcOrderRepositoryTest {
     @Test
     public void saveWhenOrderIsNew() throws Exception {
         // given
-        var order = Order.of("Alex");
-        var orderItem = OrderItem.of("Shoes", 10, BigDecimal.valueOf(500L));
-        var expectedOrderItem = OrderItem.of(1L, 1L, "Shoes", 10, BigDecimal.valueOf(500L));
+        var order = Order.builder()
+            .username("Alex")
+            .build();
+
+        var orderItem = OrderItem.builder()
+            .name("Shoes")
+            .count(10)
+            .price(BigDecimal.valueOf(500L))
+            .build();
+
+        var expectedOrderItem = OrderItem.builder()
+            .id(1L)
+            .orderId(1L)
+            .name("Shoes")
+            .count(10)
+            .price(BigDecimal.valueOf(500L))
+            .build();
 
         order.addItem(orderItem);
 
@@ -176,8 +196,15 @@ class JdbcOrderRepositoryTest {
     @Test
     public void saveWhenOrderIsNotNew() throws Exception {
         // given
-        var order = Order.of("Alex");
-        var orderItem = OrderItem.of("Shoes", 10, BigDecimal.valueOf(500L));
+        var order = Order.builder()
+            .username("Alex")
+            .build();
+
+        var orderItem = OrderItem.builder()
+            .name("Shoes")
+            .count(10)
+            .price(BigDecimal.valueOf(500L))
+            .build();
 
         order.addItem(orderItem);
 
@@ -205,7 +232,10 @@ class JdbcOrderRepositoryTest {
     @Test
     public void updateOrderTimestamp() throws Exception {
         // given
-        var order = Order.of("Alex");
+        var order = Order.builder()
+            .username("Alex")
+            .build();
+
         try (var connection = dataSource.getConnection()) {
             var createdOrder = orderRepository.save(connection, order);
             var orderUpdatedAt = order.getUpdatedAt();
@@ -222,7 +252,10 @@ class JdbcOrderRepositoryTest {
     @Test
     public void countNonDone() throws Exception {
         // given
-        var order = Order.of("Alex");
+        var order = Order.builder()
+            .username("Alex")
+            .build();
+
         try (var connection = dataSource.getConnection()) {
             orderRepository.save(connection, order);
 
@@ -237,9 +270,17 @@ class JdbcOrderRepositoryTest {
     @Test
     public void doneAllNonDoneOrdersBatched() throws Exception {
         // given
-        var order1 = Order.of("Alex");
-        var order2 = Order.of("Petr");
-        var order3 = Order.of("Artur");
+        var order1 = Order.builder()
+            .username("Alex")
+            .build();
+
+        var order2 = Order.builder()
+            .username("Petr")
+            .build();
+
+        var order3 = Order.builder()
+            .username("Artur")
+            .build();
 
         // when
         try (var connection = dataSource.getConnection()) {

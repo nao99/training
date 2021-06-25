@@ -1,4 +1,4 @@
-package com.luxoft.orders.domain;
+package com.luxoft.orders.persistent.api;
 
 import com.luxoft.orders.domain.model.OrderItem;
 import com.luxoft.orders.persistent.DataAccessException;
@@ -30,12 +30,13 @@ public class JdbcOrderItemRepository implements OrderItemRepository {
     }
 
     @Override
-    public Optional<OrderItem> findById(Connection connection, Long id) throws DataAccessException {
+    public Optional<OrderItem> findByIdAndLock(Connection connection, Long id) throws DataAccessException {
         var sql =
             "SELECT id, ordering_id, item_name, item_count, item_price " +
             "FROM ordering_items " +
             "WHERE id = ? " +
-            "FOR UPDATE;";
+            "FOR UPDATE " +
+            "SKIP LOCKED;";
 
         try {
             return jdbcTemplate.select(connection, sql, List.of(id), rs -> {
@@ -134,12 +135,12 @@ public class JdbcOrderItemRepository implements OrderItemRepository {
     }
 
     private OrderItem assemblyOrderItemFromResultSet(ResultSet rs) throws SQLException {
-        return OrderItem.of(
-            rs.getLong("id"),
-            rs.getLong("ordering_id"),
-            rs.getString("item_name"),
-            rs.getInt("item_count"),
-            rs.getBigDecimal("item_price")
-        );
+        return OrderItem.builder()
+            .id(rs.getLong("id"))
+            .orderId(rs.getLong("ordering_id"))
+            .name(rs.getString("item_name"))
+            .count(rs.getInt("item_count"))
+            .price(rs.getBigDecimal("item_price"))
+            .build();
     }
 }

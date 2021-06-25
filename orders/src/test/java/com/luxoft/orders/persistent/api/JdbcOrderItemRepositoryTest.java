@@ -1,4 +1,4 @@
-package com.luxoft.orders.domain;
+package com.luxoft.orders.persistent.api;
 
 import com.luxoft.orders.PostgreSQLContainerShared;
 import com.luxoft.orders.domain.model.Order;
@@ -56,11 +56,17 @@ class JdbcOrderItemRepositoryTest {
         // given
         try (var connection = dataSource.getConnection()) {
             var order = createOrder(connection);
-            var orderItem = OrderItem.of(order.getId(), "Shoes", 12, BigDecimal.valueOf(1200L));
+            var orderItem = OrderItem.builder()
+                .orderId(order.getId())
+                .name("Shoes")
+                .count(10)
+                .price(BigDecimal.valueOf(500L))
+                .build();
+
             var createdOrderItem = repository.save(connection, orderItem);
 
             // when
-            var selectedOrderItemOptional = repository.findById(connection, createdOrderItem.getId());
+            var selectedOrderItemOptional = repository.findByIdAndLock(connection, createdOrderItem.getId());
 
             // then
             assertTrue(selectedOrderItemOptional.isPresent());
@@ -73,7 +79,7 @@ class JdbcOrderItemRepositoryTest {
         // given
         try (var connection = dataSource.getConnection()) {
             // when
-            var selectedOrderItemOptional = repository.findById(connection, -1L);
+            var selectedOrderItemOptional = repository.findByIdAndLock(connection, -1L);
 
             // then
             assertTrue(selectedOrderItemOptional.isEmpty());
@@ -85,13 +91,18 @@ class JdbcOrderItemRepositoryTest {
         // given
         try (var connection = dataSource.getConnection()) {
             var order = createOrder(connection);
-            var orderItem = OrderItem.of(order.getId(), "Shoes", 12, BigDecimal.valueOf(1200L));
+            var orderItem = OrderItem.builder()
+                .orderId(order.getId())
+                .name("Shoes")
+                .count(10)
+                .price(BigDecimal.valueOf(500L))
+                .build();
 
             var createdOrderItem = repository.save(connection, orderItem);
             var orderItemId = createdOrderItem.getId();
 
             // when / then
-            var selectedOrderItemOptional = repository.findById(connection, orderItemId);
+            var selectedOrderItemOptional = repository.findByIdAndLock(connection, orderItemId);
 
             assertTrue(selectedOrderItemOptional.isPresent());
             assertThrows(
@@ -106,7 +117,13 @@ class JdbcOrderItemRepositoryTest {
         // given
         try (var connection = dataSource.getConnection()) {
             var order = createOrder(connection);
-            var orderItem = OrderItem.of(order.getId(), "Shoes", 12, BigDecimal.valueOf(1200L));
+            var orderItem = OrderItem.builder()
+                .orderId(order.getId())
+                .name("Shoes")
+                .count(10)
+                .price(BigDecimal.valueOf(500L))
+                .build();
+
             var createdOrderItem = repository.save(connection, orderItem);
 
             // when
@@ -123,13 +140,18 @@ class JdbcOrderItemRepositoryTest {
         // given
         try (var connection = dataSource.getConnection()) {
             var order = createOrder(connection);
-            var orderItem = OrderItem.of(order.getId(), "Shoes", 12, BigDecimal.valueOf(1200L));
+            var orderItem = OrderItem.builder()
+                .orderId(order.getId())
+                .name("Shoes")
+                .count(10)
+                .price(BigDecimal.valueOf(500L))
+                .build();
 
             // when / then
             var createdOrderItem = repository.save(connection, orderItem);
             assertNotNull(createdOrderItem.getId());
 
-            var selectedOrderItemOptional = repository.findById(connection, createdOrderItem.getId());
+            var selectedOrderItemOptional = repository.findByIdAndLock(connection, createdOrderItem.getId());
 
             assertTrue(selectedOrderItemOptional.isPresent());
             assertEquals(createdOrderItem.getId(), selectedOrderItemOptional.get().getId());
@@ -141,7 +163,12 @@ class JdbcOrderItemRepositoryTest {
         // given
         try (var connection = dataSource.getConnection()) {
             var order = createOrder(connection);
-            var orderItem = OrderItem.of(order.getId(), "Shoes", 12, BigDecimal.valueOf(1200L));
+            var orderItem = OrderItem.builder()
+                .orderId(order.getId())
+                .name("Shoes")
+                .count(10)
+                .price(BigDecimal.valueOf(500L))
+                .build();
 
             var createdOrderItem = repository.save(connection, orderItem);
 
@@ -153,7 +180,7 @@ class JdbcOrderItemRepositoryTest {
             var updatedOrderItem = repository.save(connection, createdOrderItem);
 
             // when / then
-            var selectedOrderItemOptional = repository.findById(connection, updatedOrderItem.getId());
+            var selectedOrderItemOptional = repository.findByIdAndLock(connection, updatedOrderItem.getId());
             assertTrue(selectedOrderItemOptional.isPresent());
 
             var selectedOrderItem = selectedOrderItemOptional.get();
@@ -174,7 +201,10 @@ class JdbcOrderItemRepositoryTest {
      * @return an order
      */
     private Order createOrder(Connection connection) {
-        var order = Order.of("Alex");
+        var order = Order.builder()
+            .username("Alex")
+            .build();
+
         var orderId = jdbcTemplate.update(
             connection,
             "INSERT INTO ordering (user_name, done, updated_at) VALUES (?, ?, ?);",

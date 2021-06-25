@@ -1,5 +1,8 @@
 package com.luxoft.orders.domain.model;
 
+import lombok.Builder;
+import lombok.Getter;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +14,8 @@ import java.util.List;
  * @version 1.0.0
  * @since   2021-06-15
  */
+@Getter
+@Builder
 public class Order {
     private final Long id;
     private final String username;
@@ -22,45 +27,17 @@ public class Order {
         this.id = id;
         this.username = username;
         this.done = done;
-        this.updatedAt = updatedAt;
-        this.items = items;
-    }
-
-    public static Order of(Long id, String username, boolean done, LocalDateTime updatedAt, List<OrderItem> items) {
-        return new Order(id, username, done, updatedAt, items);
-    }
-
-    public static Order of(String username) {
-        return new Order(null, username, false, LocalDateTime.now(), new ArrayList<>());
+        this.updatedAt = updatedAt == null ? LocalDateTime.now() : updatedAt;
+        this.items = items == null ? new ArrayList<>() : items;
     }
 
     public Order withId(Long id) {
         return new Order(id, username, done, updatedAt, items);
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public boolean isDone() {
-        return done;
-    }
-
     public void done() {
         done = true;
         updateTimestamp();
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public List<OrderItem> getItems() {
-        return items;
     }
 
     public void addItem(OrderItem item) {

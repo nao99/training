@@ -4,6 +4,8 @@ import com.luxoft.orders.api.CreateOrderDto;
 import com.luxoft.orders.api.CreateOrderItemDto;
 import com.luxoft.orders.domain.model.Order;
 import com.luxoft.orders.domain.model.OrderItem;
+import com.luxoft.orders.persistent.api.OrderItemRepository;
+import com.luxoft.orders.persistent.api.OrderRepository;
 import com.luxoft.orders.persistent.transaction.TransactionRunner;
 
 /**
@@ -37,9 +39,18 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public Order createOrder(CreateOrderDto createOrderDto) {
-        var order = Order.of(createOrderDto.getUsername());
-        for (var orderItem : createOrderDto.getItems()) {
-            order.addItem(OrderItem.of(orderItem.getName(), orderItem.getCount(), orderItem.getPrice()));
+        var order = Order.builder()
+            .username(createOrderDto.getUsername())
+            .build();
+
+        for (var createOrderItemDto : createOrderDto.getItems()) {
+            var orderItem = OrderItem.builder()
+                .name(createOrderItemDto.getName())
+                .count(createOrderItemDto.getCount())
+                .price(createOrderItemDto.getPrice())
+                .build();
+
+            order.addItem(orderItem);
         }
 
         return transactionRunner.run(connection -> orderRepository.save(connection, order));
@@ -48,17 +59,17 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public void addOrderItem(Long orderId, CreateOrderItemDto createOrderItemDto) throws OrderNotFoundException {
         transactionRunner.run(connection -> {
-            var orderExists = orderRepository.existsById(connection, orderId);
+            var orderExists = orderRepository.checkExistsByIdAndLock(connection, orderId);
             if (!orderExists) {
                 throw new OrderNotFoundException(String.format("Order %d was not found", orderId));
             }
 
-            var orderItem = OrderItem.of(
-                orderId,
-                createOrderItemDto.getName(),
-                createOrderItemDto.getCount(),
-                createOrderItemDto.getPrice()
-            );
+            var orderItem = OrderItem.builder()
+                .orderId(orderId)
+                .name(createOrderItemDto.getName())
+                .count(createOrderItemDto.getCount())
+                .price(createOrderItemDto.getPrice())
+                .build();
 
             orderItemRepository.save(connection, orderItem);
             orderRepository.updateOrderTimestamp(connection, orderId);
@@ -70,7 +81,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public void changeOrderItemCount(Long orderItemId, int count) throws OrderItemNotFoundException {
         transactionRunner.run(connection -> {
-            var orderItem = orderItemRepository.findById(connection, orderItemId)
+            var orderItem = orderItemRepository.findByIdAndLock(connection, orderItemId)
                 .orElseThrow(() -> {
                     throw new OrderItemNotFoundException(String.format("Order item %d was not found", orderItemId));
                 });

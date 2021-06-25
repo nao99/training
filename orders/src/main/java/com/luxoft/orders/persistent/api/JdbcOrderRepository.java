@@ -1,4 +1,4 @@
-package com.luxoft.orders.domain;
+package com.luxoft.orders.persistent.api;
 
 import com.luxoft.orders.domain.model.Order;
 import com.luxoft.orders.domain.model.OrderItem;
@@ -62,7 +62,7 @@ public class JdbcOrderRepository implements OrderRepository {
     }
 
     @Override
-    public boolean existsById(Connection connection, Long id) throws DataAccessException {
+    public boolean checkExistsByIdAndLock(Connection connection, Long id) throws DataAccessException {
         var sql = "SELECT EXISTS (SELECT 1 FROM ordering WHERE id = ? FOR UPDATE);";
         return jdbcTemplate.select(connection, sql, List.of(id), rs -> {
             try {
@@ -182,12 +182,12 @@ public class JdbcOrderRepository implements OrderRepository {
     }
 
     private Order assemblyOrderFromResultSet(ResultSet rs, List<OrderItem> orderItems) throws SQLException {
-        return Order.of(
-            rs.getLong("id"),
-            rs.getString("user_name"),
-            rs.getBoolean("done"),
-            rs.getTimestamp("updated_at").toLocalDateTime(),
-            orderItems
-        );
+        return Order.builder()
+            .id(rs.getLong("id"))
+            .username(rs.getString("user_name"))
+            .done(rs.getBoolean("done"))
+            .updatedAt(rs.getTimestamp("updated_at").toLocalDateTime())
+            .items(orderItems)
+            .build();
     }
 }

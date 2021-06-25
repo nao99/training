@@ -1,4 +1,4 @@
-package com.luxoft.orders.domain;
+package com.luxoft.orders.persistent.api;
 
 import com.luxoft.orders.domain.model.OrderItem;
 import com.luxoft.orders.persistent.DataAccessException;
@@ -17,7 +17,6 @@ import java.util.Optional;
 public interface OrderItemRepository {
     /**
      * Finds an {@link OrderItem} by id
-     * Blocks this order item in a table
      *
      * @param connection a connection
      * @param id         an order item id
@@ -25,7 +24,7 @@ public interface OrderItemRepository {
      * @return an order item if exists
      * @throws DataAccessException if something was wrong
      */
-    Optional<OrderItem> findById(Connection connection, Long id) throws DataAccessException;
+    Optional<OrderItem> findByIdAndLock(Connection connection, Long id) throws DataAccessException;
 
     /**
      * Finds {@link OrderItem}s by order id

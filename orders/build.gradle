@@ -11,7 +11,7 @@ dependencies {
     implementation "org.flywaydb:flyway-core"
     implementation "org.postgresql:postgresql"
 
-    implementation "org.slf4j:slf4j-log4j12"
+    implementation "ch.qos.logback:logback-classic"
 
     testImplementation "org.junit.jupiter:junit-jupiter-api"
     testImplementation "org.junit.jupiter:junit-jupiter-engine"
@@ -20,6 +20,9 @@ dependencies {
 
     testImplementation("org.testcontainers:junit-jupiter:${testcontainersVersion}")
     testImplementation("org.testcontainers:postgresql:${testcontainersVersion}")
+
+    compileOnly "org.projectlombok:lombok"
+    annotationProcessor "org.projectlombok:lombok"
 }
 
 test {

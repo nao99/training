@@ -1,9 +1,13 @@
 package com.luxoft.orders.persistent.query;
 
+import com.luxoft.orders.PostgreSQLContainerShared;
 import com.luxoft.orders.persistent.DatabaseException;
+import com.zaxxer.hikari.HikariDataSource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.testcontainers.containers.PostgreSQLContainer;
 
+import javax.sql.DataSource;
 import java.sql.*;
 import java.util.List;
 import java.util.Optional;
@@ -20,15 +24,31 @@ import static org.mockito.Mockito.*;
  * @since   2021-06-21
  */
 class JdbcTemplateImplTest {
+    private static final PostgreSQLContainer<PostgreSQLContainerShared> POSTGRESQL_CONTAINER =
+        PostgreSQLContainerShared.getInstance();
+
+    static {
+        POSTGRESQL_CONTAINER.start();
+    }
+
+    private DataSource dataSource;
     private JdbcTemplateImpl template;
 
     @BeforeEach
-    public void setUp() {
+    public void setUp() throws Exception {
+        var hikariDataSource = new HikariDataSource();
+
+        hikariDataSource.setJdbcUrl(POSTGRESQL_CONTAINER.getJdbcUrl());
+        hikariDataSource.setUsername(POSTGRESQL_CONTAINER.getUsername());
+        hikariDataSource.setPassword(POSTGRESQL_CONTAINER.getPassword());
+        hikariDataSource.setMaximumPoolSize(2);
+
+        dataSource = hikariDataSource;
         template = new JdbcTemplateImpl();
     }
 
     @Test
-    public void update() throws Exception {
+    public void updateWhenRecordStillNotExists() throws Exception {
         // given
         var connectionMock = mock(Connection.class);
         var sql = "UPDATE ordering SET done = true WHERE id = ?;";
@@ -107,21 +127,15 @@ class JdbcTemplateImplTest {
 
     @Test
     public void updateWhenUnableToExecuteUpdateStatement() throws Exception {
-        // given
-        var connectionMock = mock(Connection.class);
-        var sql = "UPDATE ordering SET done = true WHERE id = ?;";
-        List<Object> parameters = List.of(15);
-
-        var preparedStatementMock = mock(PreparedStatement.class);
-
-        // when / then
-        when(connectionMock.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS))
-            .thenReturn(preparedStatementMock);
-
-        when(preparedStatementMock.executeUpdate())
-            .thenThrow(SQLException.class);
-
-        assertThrows(DatabaseException.class, () -> template.update(connectionMock, sql, parameters));
+        var expectedValue = "Alex";
+        try (var connection = dataSource.getConnection()) {
+            // when / then
+            assertThrows(DatabaseException.class, () -> template.update(
+                connection,
+                "INSERT INTO jdbc_template_test (id, text) VALUES (?, ?);",
+                List.of(expectedValue)
+            ));
+        }
     }
 
     @Test

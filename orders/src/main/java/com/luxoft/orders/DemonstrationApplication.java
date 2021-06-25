@@ -2,8 +2,8 @@ package com.luxoft.orders;
 
 import com.luxoft.orders.api.CreateOrderDto;
 import com.luxoft.orders.api.CreateOrderItemDto;
-import com.luxoft.orders.domain.JdbcOrderItemRepository;
-import com.luxoft.orders.domain.JdbcOrderRepository;
+import com.luxoft.orders.persistent.api.JdbcOrderItemRepository;
+import com.luxoft.orders.persistent.api.JdbcOrderRepository;
 import com.luxoft.orders.domain.OrderServiceImpl;
 import com.luxoft.orders.persistent.migration.FlywayMigrationsExecutor;
 import com.luxoft.orders.persistent.query.JdbcTemplateImpl;
@@ -27,7 +27,7 @@ public class DemonstrationApplication {
 
     public static void main(String[] args) {
         // 0. Preparation
-        HikariDataSource dataSource = new HikariDataSource();
+        var dataSource = new HikariDataSource();
 
         dataSource.setAutoCommit(false);
         dataSource.setJdbcUrl(DB_URL);

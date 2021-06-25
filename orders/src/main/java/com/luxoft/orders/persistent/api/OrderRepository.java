@@ -1,4 +1,4 @@
-package com.luxoft.orders.domain;
+package com.luxoft.orders.persistent.api;
 
 import com.luxoft.orders.domain.model.Order;
 import com.luxoft.orders.persistent.DataAccessException;
@@ -27,7 +27,6 @@ public interface OrderRepository {
 
     /**
      * Checks if an {@link Order} exists
-     * Blocks this order in a table
      *
      * @param connection a connection
      * @param id         an order id
@@ -35,7 +34,7 @@ public interface OrderRepository {
      * @return true if exists or false else
      * @throws DataAccessException if something was wrong
      */
-    boolean existsById(Connection connection, Long id) throws DataAccessException;
+    boolean checkExistsByIdAndLock(Connection connection, Long id) throws DataAccessException;
 
     /**
      * Saves an {@link Order}
