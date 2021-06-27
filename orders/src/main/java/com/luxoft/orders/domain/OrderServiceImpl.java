@@ -7,6 +7,8 @@ import com.luxoft.orders.domain.model.OrderItem;
 import com.luxoft.orders.persistent.api.OrderItemRepository;
 import com.luxoft.orders.persistent.api.OrderRepository;
 import com.luxoft.orders.persistent.transaction.TransactionRunner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * OrderServiceImpl class
@@ -16,6 +18,8 @@ import com.luxoft.orders.persistent.transaction.TransactionRunner;
  * @since   2021-06-22
  */
 public class OrderServiceImpl implements OrderService {
+    private static final Logger logger = LoggerFactory.getLogger(OrderServiceImpl.class);
+
     private final TransactionRunner transactionRunner;
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
@@ -53,7 +57,12 @@ public class OrderServiceImpl implements OrderService {
             order.addItem(orderItem);
         }
 
-        return transactionRunner.run(connection -> orderRepository.save(connection, order));
+        return transactionRunner.run(connection -> {
+            var createdOrder = orderRepository.save(connection, order);
+            logger.info("Order created {}", createdOrder);
+
+            return createdOrder;
+        });
     }
 
     @Override
@@ -61,7 +70,10 @@ public class OrderServiceImpl implements OrderService {
         transactionRunner.run(connection -> {
             var orderExists = orderRepository.checkExistsByIdAndLock(connection, orderId);
             if (!orderExists) {
-                throw new OrderNotFoundException(String.format("Order %d was not found", orderId));
+                var errorMessage = String.format("Order %d was not found", orderId);
+                logger.error(errorMessage);
+
+                throw new OrderNotFoundException(errorMessage);
             }
 
             var orderItem = OrderItem.builder()
@@ -71,10 +83,12 @@ public class OrderServiceImpl implements OrderService {
                 .price(createOrderItemDto.getPrice())
                 .build();
 
-            orderItemRepository.save(connection, orderItem);
+            var addedOrderItem = orderItemRepository.save(connection, orderItem);
+            logger.info("Order item {} added to {} order", addedOrderItem, orderId);
+
             orderRepository.updateOrderTimestamp(connection, orderId);
 
-            return orderItem;
+            return addedOrderItem;
         });
     }
 
@@ -83,15 +97,20 @@ public class OrderServiceImpl implements OrderService {
         transactionRunner.run(connection -> {
             var orderItem = orderItemRepository.findByIdAndLock(connection, orderItemId)
                 .orElseThrow(() -> {
-                    throw new OrderItemNotFoundException(String.format("Order item %d was not found", orderItemId));
+                    var errorMessage = String.format("Order item %d was not found", orderItemId);
+                    logger.error(errorMessage);
+
+                    throw new OrderItemNotFoundException(errorMessage);
                 });
 
             orderItem.changeCount(count);
 
-            orderItemRepository.save(connection, orderItem);
+            var changedOrderItem = orderItemRepository.save(connection, orderItem);
+            logger.info("Order item count changed {}", changedOrderItem);
+
             orderRepository.updateOrderTimestamp(connection, orderItem.getOrderId());
 
-            return orderItem;
+            return changedOrderItem;
         });
     }
 
@@ -100,6 +119,7 @@ public class OrderServiceImpl implements OrderService {
         transactionRunner.run(connection -> {
             var ordersCount = orderRepository.countNonDone(connection);
             if (ordersCount == 0) {
+                logger.info("All orders already done");
                 return 0;
             }
 
@@ -110,6 +130,8 @@ public class OrderServiceImpl implements OrderService {
                 orderRepository.doneAllNonDoneOrdersBatched(connection, batchSize);
                 ordersDoneCount += batchSize;
             }
+
+            logger.info("All orders were done");
 
             return ordersDoneCount;
         });
