@@ -59,7 +59,7 @@ public class OrderServiceImpl implements OrderService {
 
         return transactionRunner.run(connection -> {
             var createdOrder = orderRepository.save(connection, order);
-            logger.info("Order created {}", createdOrder);
+            logger.info("Created order with {} id", createdOrder.getId());
 
             return createdOrder;
         });
@@ -84,7 +84,7 @@ public class OrderServiceImpl implements OrderService {
                 .build();
 
             var addedOrderItem = orderItemRepository.save(connection, orderItem);
-            logger.info("Order item {} added to {} order", addedOrderItem, orderId);
+            logger.info("Order item with {} id was added to order with {} id", addedOrderItem.getId(), orderId);
 
             orderRepository.updateOrderTimestamp(connection, orderId);
 
@@ -103,10 +103,13 @@ public class OrderServiceImpl implements OrderService {
                     throw new OrderItemNotFoundException(errorMessage);
                 });
 
+            var previousOrderItemCount = orderItem.getCount();
             orderItem.changeCount(count);
 
             var changedOrderItem = orderItemRepository.save(connection, orderItem);
-            logger.info("Order item count changed {}", changedOrderItem);
+
+            var logMessagePattern = "Count of order item with {} id was changed from {} to {}";
+            logger.info(logMessagePattern, orderItemId, previousOrderItemCount, count);
 
             orderRepository.updateOrderTimestamp(connection, orderItem.getOrderId());
 
@@ -119,7 +122,7 @@ public class OrderServiceImpl implements OrderService {
         transactionRunner.run(connection -> {
             var ordersCount = orderRepository.countNonDone(connection);
             if (ordersCount == 0) {
-                logger.info("All orders already done");
+                logger.info("All orders have already been done");
                 return 0;
             }
 
@@ -131,7 +134,7 @@ public class OrderServiceImpl implements OrderService {
                 ordersDoneCount += batchSize;
             }
 
-            logger.info("All orders were done");
+            logger.info("All orders were successfully done");
 
             return ordersDoneCount;
         });
