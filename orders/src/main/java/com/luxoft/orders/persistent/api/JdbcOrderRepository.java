@@ -138,7 +138,7 @@ public class JdbcOrderRepository implements OrderRepository {
                 "WHERE done = false " +
                     "FOR UPDATE " +
                         "SKIP LOCKED " +
-                    "LIMIT ? " +
+                    "LIMIT ?" +
                 ")" +
             "UPDATE ordering " +
             "SET done = true, updated_at = NOW() " +

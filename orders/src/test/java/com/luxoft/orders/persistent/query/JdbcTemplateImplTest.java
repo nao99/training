@@ -9,12 +9,11 @@ import org.testcontainers.containers.PostgreSQLContainer;
 
 import javax.sql.DataSource;
 import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 /**
  * JdbcTemplateImplTest class
@@ -48,250 +47,161 @@ class JdbcTemplateImplTest {
     }
 
     @Test
-    public void updateWhenRecordStillNotExists() throws Exception {
+    public void updateWhenRecordExists() throws Exception {
         // given
-        var connectionMock = mock(Connection.class);
-        var sql = "UPDATE ordering SET done = true WHERE id = ?;";
-        List<Object> parameters = List.of(15);
+        List<Object> parameters = List.of("Alex", false, LocalDateTime.now());
 
-        var preparedStatementMock = mock(PreparedStatement.class);
-        var resultSetMock = mock(ResultSet.class);
+        var createOrderSql = "INSERT INTO ordering (user_name, done, updated_at) VALUES (?, ?, ?);";
+        var selectOrderDoneSql = "SELECT done FROM ordering WHERE id = ?;";
+        var updateOrderDoneSql = "UPDATE ordering SET done = true WHERE id = ?;";
 
-        long expectedReturnValue = 15L;
+        Function<ResultSet, Boolean> handler = rs -> {
+            try {
+                rs.next();
+                return rs.getBoolean("done");
+            } catch (SQLException e) {
+                throw new RuntimeException();
+            }
+        };
 
-        // when
-        when(connectionMock.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS))
-            .thenReturn(preparedStatementMock);
+        try (var connection = dataSource.getConnection()) {
+            var createdOrderId = template.update(connection, createOrderSql, parameters);
+            List<Object> selectionParameters = List.of(createdOrderId);
 
-        when(preparedStatementMock.getGeneratedKeys())
-            .thenReturn(resultSetMock);
+            var selectedOrderDone = template.select(connection, selectOrderDoneSql, selectionParameters, handler);
 
-        when(resultSetMock.getLong(1))
-            .thenReturn(expectedReturnValue);
+            assertTrue(selectedOrderDone.isPresent());
+            assertFalse(selectedOrderDone.get());
 
-        long result = template.update(connectionMock, sql, parameters);
+            // when
+            template.update(connection, updateOrderDoneSql, List.of(createdOrderId));
+            var selectedOrderDoneUpdated = template.select(connection, selectOrderDoneSql, selectionParameters, handler);
 
-        // then
-        verify(connectionMock, times(1))
-            .prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            // then
+            assertTrue(selectedOrderDoneUpdated.isPresent());
+            assertTrue(selectedOrderDoneUpdated.get());
+        }
+    }
 
-        verify(preparedStatementMock, times(1))
-            .executeUpdate();
+    @Test
+    public void updateWhenRecordNotExists() throws Exception {
+        // given
+        List<Object> parameters = List.of("Alex", false, LocalDateTime.now());
+        var sql = "INSERT INTO ordering (user_name, done, updated_at) VALUES (?, ?, ?);";
 
-        verify(preparedStatementMock, times(1))
-            .setObject(1, parameters.get(0));
+        try (var connection = dataSource.getConnection()) {
+            // when
+            var result = template.update(connection, sql, parameters);
 
-        verify(resultSetMock, times(1))
-            .next();
-
-        verify(resultSetMock, times(1))
-            .getLong(1);
-
-        assertEquals(expectedReturnValue, result);
+            // then
+            assertTrue(result > 0);
+        }
     }
 
     @Test
     public void updateWhenUnableToCreatePreparedStatement() throws Exception {
         // given
-        var connectionMock = mock(Connection.class);
-        var sql = "UPDATE ordering SET done = true WHERE id = ?;";
-        List<Object> parameters = List.of(15);
+        List<Object> parameters = List.of("Alex", false, LocalDateTime.now());
+        var sql = "INSERT INTO ordering (user_name, done, updated_at) VALUES (?, ?, ?);";
 
-        // when / then
-        when(connectionMock.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS))
-            .thenThrow(SQLException.class);
+        try (var connection = dataSource.getConnection()) {
+            connection.close();
 
-        assertThrows(DatabaseException.class, () -> template.update(connectionMock, sql, parameters));
+            // when / then
+            assertThrows(DatabaseException.class, () -> template.update(connection, sql, parameters));
+        }
     }
 
     @Test
     public void updateWhenUnableToPrepareParametersToStatement() throws Exception {
         // given
-        var connectionMock = mock(Connection.class);
-        var sql = "UPDATE ordering SET done = true WHERE id = ?;";
-        List<Object> parameters = List.of(15);
+        List<Object> parameters = List.of("Alex", false, new UnknownParameterType());
+        var sql = "INSERT INTO ordering (user_name, done, updated_at) VALUES (?, ?, ?);";
 
-        var preparedStatementMock = mock(PreparedStatement.class);
-        var sqlExceptionMock = mock(SQLException.class);
-
-        // when / then
-        when(connectionMock.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS))
-            .thenReturn(preparedStatementMock);
-
-        doThrow(sqlExceptionMock)
-            .when(preparedStatementMock)
-            .setObject(1, parameters.get(0));
-
-        assertThrows(DatabaseException.class, () -> template.update(connectionMock, sql, parameters));
-    }
-
-    @Test
-    public void updateWhenUnableToExecuteUpdateStatement() throws Exception {
-        var expectedValue = "Alex";
         try (var connection = dataSource.getConnection()) {
             // when / then
-            assertThrows(DatabaseException.class, () -> template.update(
-                connection,
-                "INSERT INTO jdbc_template_test (id, text) VALUES (?, ?);",
-                List.of(expectedValue)
-            ));
+            assertThrows(DatabaseException.class, () -> template.update(connection, sql, parameters));
         }
     }
 
     @Test
-    public void updateWhenUnableToGetGeneratedKeys() throws Exception {
+    public void updateWhenUnableToExecuteUpdateStatement() throws Exception {
         // given
-        var connectionMock = mock(Connection.class);
-        var sql = "UPDATE ordering SET done = true WHERE id = ?;";
-        List<Object> parameters = List.of(15);
+        List<Object> parameters = List.of("Alex", false);
+        var sql = "INSERT INTO ordering (user_name, done, updated_at) VALUES (?, ?, ?);";
 
-        var preparedStatementMock = mock(PreparedStatement.class);
+        try (var connection = dataSource.getConnection()) {
+            connection.close();
 
-        // when / then
-        when(connectionMock.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS))
-            .thenReturn(preparedStatementMock);
-
-        when(preparedStatementMock.getGeneratedKeys())
-            .thenThrow(SQLException.class);
-
-        assertThrows(DatabaseException.class, () -> template.update(connectionMock, sql, parameters));
-    }
-
-    @Test
-    public void updateWhenUnableToGetNextReturnedValue() throws Exception {
-        // given
-        var connectionMock = mock(Connection.class);
-        var sql = "UPDATE ordering SET done = true WHERE id = ?;";
-        List<Object> parameters = List.of(15);
-
-        var preparedStatementMock = mock(PreparedStatement.class);
-        var resultSetMock = mock(ResultSet.class);
-
-        // when / then
-        when(connectionMock.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS))
-            .thenReturn(preparedStatementMock);
-
-        when(preparedStatementMock.getGeneratedKeys())
-            .thenReturn(resultSetMock);
-
-        when(resultSetMock.next())
-            .thenThrow(SQLException.class);
-
-        assertThrows(DatabaseException.class, () -> template.update(connectionMock, sql, parameters));
-    }
-
-    @Test
-    public void updateWhenUnableToGetNextReturnedValueAsLong() throws Exception {
-        // given
-        var connectionMock = mock(Connection.class);
-        var sql = "UPDATE ordering SET done = true WHERE id = ?;";
-        List<Object> parameters = List.of(15);
-
-        var preparedStatementMock = mock(PreparedStatement.class);
-        var resultSetMock = mock(ResultSet.class);
-
-        // when / then
-        when(connectionMock.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS))
-            .thenReturn(preparedStatementMock);
-
-        when(preparedStatementMock.getGeneratedKeys())
-            .thenReturn(resultSetMock);
-
-        when(resultSetMock.getLong(1))
-            .thenThrow(SQLException.class);
-
-        assertThrows(DatabaseException.class, () -> template.update(connectionMock, sql, parameters));
+            // when / then
+            assertThrows(DatabaseException.class, () -> template.update(connection, sql, parameters));
+        }
     }
 
     @Test
     public void select() throws Exception {
         // given
-        var connectionMock = mock(Connection.class);
-        var sql = "SELECT user_name FROM ordering WHERE id = ?;";
-        List<Object> parameters = List.of(15);
-        Function<ResultSet, String> handler = (resultSet) -> "Alex";
+        List<Object> createOrderParameters = List.of("Alex", false, LocalDateTime.now());
 
-        PreparedStatement preparedStatementMock = mock(PreparedStatement.class);
-        ResultSet resultSetMock = mock(ResultSet.class);
+        var createOrderSql = "INSERT INTO ordering (user_name, done, updated_at) VALUES (?, ?, ?);";
+        var selectOrderUsernameSql = "SELECT user_name FROM ordering WHERE id = ?;";
 
-        Optional<String> expectedReturnValue = Optional.of("Alex");
+        try (var connection = dataSource.getConnection()) {
+            var orderId = template.update(connection, createOrderSql, createOrderParameters);
 
-        // when
-        when(connectionMock.prepareStatement(sql))
-            .thenReturn(preparedStatementMock);
+            // when
+            var result = template.select(connection, selectOrderUsernameSql, List.of(orderId), rs -> {
+                try {
+                    rs.next();
+                    return rs.getString("user_name");
+                } catch (SQLException e) {
+                    throw new RuntimeException();
+                }
+            });
 
-        when(preparedStatementMock.executeQuery())
-            .thenReturn(resultSetMock);
-
-        Optional<String> result = template.select(connectionMock, sql, parameters, handler);
-
-        // then
-        verify(connectionMock, times(1))
-            .prepareStatement(sql);
-
-        verify(preparedStatementMock, times(1))
-            .setObject(1, parameters.get(0));
-
-        verify(preparedStatementMock, times(1))
-            .executeQuery();
-
-        assertEquals(expectedReturnValue, result);
+            // then
+            assertTrue(result.isPresent());
+            assertEquals(createOrderParameters.get(0), result.get());
+        }
     }
 
     @Test
     public void selectWhenUnableToCreatePreparedStatement() throws Exception {
         // given
-        var connectionMock = mock(Connection.class);
-        var sql = "SELECT user_name FROM ordering WHERE id = ?;";
-        List<Object> parameters = List.of(15);
-        Function<ResultSet, String> handler = (resultSet) -> "Alex";
+        try (var connection = dataSource.getConnection()) {
+            connection.close();
 
-        // when / then
-        when(connectionMock.prepareStatement(sql))
-            .thenThrow(SQLException.class);
-
-        assertThrows(DatabaseException.class, () -> template.select(connectionMock, sql, parameters, handler));
+            // when / then
+            assertThrows(
+                DatabaseException.class,
+                () -> template.select(connection, "SELECT id FROM ordering;", List.of(), rs -> null)
+            );
+        }
     }
 
     @Test
     public void selectWhenUnableToPrepareParametersToStatement() throws Exception {
         // given
-        var connectionMock = mock(Connection.class);
-        var sql = "SELECT user_name FROM ordering WHERE id = ?;";
-        List<Object> parameters = List.of(15);
-        Function<ResultSet, String> handler = (resultSet) -> "Alex";
-
-        var preparedStatementMock = mock(PreparedStatement.class);
-        var sqlExceptionMock = mock(SQLException.class);
-
-        // when / then
-        when(connectionMock.prepareStatement(sql))
-            .thenReturn(preparedStatementMock);
-
-        doThrow(sqlExceptionMock)
-            .when(preparedStatementMock)
-            .setObject(1, parameters.get(0));
-
-        assertThrows(DatabaseException.class, () -> template.select(connectionMock, sql, parameters, handler));
+        List<Object> parameters = List.of(new UnknownParameterType());
+        try (var connection = dataSource.getConnection()) {
+            // when / then
+            assertThrows(
+                DatabaseException.class,
+                () -> template.select(connection, "SELECT id FROM ordering WHERE id = ?;", parameters, rs -> null)
+            );
+        }
     }
 
     @Test
     public void selectWhenUnableToExecuteQuery() throws Exception {
         // given
-        var connectionMock = mock(Connection.class);
         var sql = "SELECT user_name FROM ordering WHERE id = ?;";
-        List<Object> parameters = List.of(15);
-        Function<ResultSet, String> handler = (resultSet) -> "Alex";
+        try (var connection = dataSource.getConnection()) {
+            // when / then
+            assertThrows(DatabaseException.class, () -> template.select(connection, sql, List.of(), rs -> null));
+        }
+    }
 
-        var preparedStatementMock = mock(PreparedStatement.class);
-
-        // when / then
-        when(connectionMock.prepareStatement(sql))
-            .thenReturn(preparedStatementMock);
-
-        when(preparedStatementMock.executeQuery())
-            .thenThrow(SQLException.class);
-
-        assertThrows(DatabaseException.class, () -> template.select(connectionMock, sql, parameters, handler));
+    private static class UnknownParameterType {
     }
 }

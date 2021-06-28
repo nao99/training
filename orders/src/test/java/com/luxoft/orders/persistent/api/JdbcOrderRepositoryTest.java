@@ -270,35 +270,21 @@ class JdbcOrderRepositoryTest {
     @Test
     public void doneAllNonDoneOrdersBatched() throws Exception {
         // given
-        var order1 = Order.builder()
+        var order = Order.builder()
             .username("Alex")
-            .build();
-
-        var order2 = Order.builder()
-            .username("Petr")
-            .build();
-
-        var order3 = Order.builder()
-            .username("Artur")
             .build();
 
         // when
         try (var connection = dataSource.getConnection()) {
-            var createdOrder1 = orderRepository.save(connection, order1);
-            var createdOrder2 = orderRepository.save(connection, order2);
-            var createdOrder3 = orderRepository.save(connection, order3);
+            var createdOrder = orderRepository.save(connection, order);
 
             // when
             orderRepository.doneAllNonDoneOrdersBatched(connection, 15);
 
-            var selectedOrder1 = orderRepository.findById(connection, createdOrder1.getId()).orElseThrow();
-            var selectedOrder2 = orderRepository.findById(connection, createdOrder2.getId()).orElseThrow();
-            var selectedOrder3 = orderRepository.findById(connection, createdOrder3.getId()).orElseThrow();
+            var selectedOrder = orderRepository.findById(connection, createdOrder.getId()).orElseThrow();
 
             // then
-            assertTrue(selectedOrder1.isDone());
-            assertTrue(selectedOrder2.isDone());
-            assertTrue(selectedOrder3.isDone());
+            assertTrue(selectedOrder.isDone());
         }
     }
 }
