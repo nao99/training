@@ -7,10 +7,8 @@ import com.luxoft.orders.domain.model.Order;
 import com.luxoft.orders.domain.model.OrderItem;
 import com.luxoft.orders.persistent.api.JdbcOrderItemRepository;
 import com.luxoft.orders.persistent.api.JdbcOrderRepository;
-import com.luxoft.orders.persistent.query.JdbcTemplate;
 import com.luxoft.orders.persistent.query.JdbcTemplateImpl;
 import com.luxoft.orders.persistent.transaction.JdbcTransactionRunner;
-import com.luxoft.orders.persistent.transaction.TransactionRunner;
 import com.zaxxer.hikari.HikariDataSource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,8 +38,6 @@ class OrderServiceImplTest {
     }
 
     private DataSource dataSource;
-    private TransactionRunner transactionRunner;
-    private JdbcTemplate jdbcTemplate;
     private JdbcOrderItemRepository orderItemRepository;
     private JdbcOrderRepository orderRepository;
 
@@ -59,8 +55,8 @@ class OrderServiceImplTest {
 
         dataSource = hikariDataSource;
 
-        transactionRunner = new JdbcTransactionRunner(dataSource);
-        jdbcTemplate = new JdbcTemplateImpl();
+        var transactionRunner = new JdbcTransactionRunner(dataSource);
+        var jdbcTemplate = new JdbcTemplateImpl();
 
         orderItemRepository = new JdbcOrderItemRepository(jdbcTemplate);
         orderRepository = new JdbcOrderRepository(jdbcTemplate, orderItemRepository);
