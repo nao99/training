@@ -1,0 +1,30 @@
+plugins {
+    id "java"
+}
+
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
+
+dependencies {
+    implementation "com.zaxxer:HikariCP"
+
+    implementation "org.flywaydb:flyway-core"
+    implementation "org.postgresql:postgresql"
+
+    implementation "ch.qos.logback:logback-classic"
+
+    testImplementation "org.junit.jupiter:junit-jupiter-api"
+    testImplementation "org.junit.jupiter:junit-jupiter-engine"
+
+    testImplementation "org.mockito:mockito-core"
+
+    testImplementation("org.testcontainers:junit-jupiter:${testcontainersVersion}")
+    testImplementation("org.testcontainers:postgresql:${testcontainersVersion}")
+
+    compileOnly "org.projectlombok:lombok"
+    annotationProcessor "org.projectlombok:lombok"
+}
+
+test {
+    useJUnitPlatform()
+}

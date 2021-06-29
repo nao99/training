@@ -1,0 +1,40 @@
+plugins {
+    id "idea"
+    id "io.spring.dependency-management" version "${springDependencyManagementVersion}"
+}
+
+idea {
+    project {
+        languageLevel = JavaVersion.VERSION_11
+    }
+
+    module {
+        downloadJavadoc = true
+        downloadSources = true
+    }
+}
+
+allprojects {
+    group "com.luxoft"
+    version "${projectVersion}"
+
+    repositories {
+        mavenCentral()
+    }
+
+    apply plugin: "io.spring.dependency-management"
+
+    dependencyManagement {
+        dependencies {
+            imports {
+                mavenBom("org.springframework.boot:spring-boot-dependencies:${springBootDependenciesVersion}")
+            }
+        }
+    }
+
+    configurations.all {
+        resolutionStrategy {
+            failOnVersionConflict()
+        }
+    }
+}
