@@ -1,9 +1,11 @@
 package com.luxoft.atm.domain;
 
 import com.luxoft.atm.domain.model.Denomination;
+import com.luxoft.atm.domain.model.atm.ATMDisabledException;
 import com.luxoft.atm.domain.model.atm.DefaultATM;
 import com.luxoft.atm.domain.model.banknote.Banknote;
 import com.luxoft.atm.domain.model.banknote.BanknotesBox;
+import com.luxoft.atm.domain.model.banknote.Box;
 import com.luxoft.atm.domain.model.banknote.DefaultBanknotesBox;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +13,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * ATMServiceImplTest class
@@ -38,7 +41,8 @@ public class ATMServiceImplTest {
         }};
 
         var atm = DefaultATM.builder()
-            .banknoteBoxes(banknotesBoxes)
+            .box(Box.builder().banknoteBoxes(banknotesBoxes).build())
+            .enabled(true)
             .build();
 
         Set<Banknote> banknotes = new HashSet<>() {{
@@ -74,7 +78,8 @@ public class ATMServiceImplTest {
         }};
 
         var atm = DefaultATM.builder()
-            .banknoteBoxes(banknotesBoxes)
+            .box(Box.builder().banknoteBoxes(banknotesBoxes).build())
+            .enabled(true)
             .build();
 
         Set<Banknote> banknotes = new HashSet<>() {{
@@ -87,5 +92,45 @@ public class ATMServiceImplTest {
 
         // then
         assertThat(nonDepositedBanknotes.iterator().next()).isSameAs(banknote1000);
+    }
+
+    @Test
+    void depositWhenATMIsDisabled() throws Exception {
+        // given
+        var service = new ATMServiceImpl();
+        var atm = DefaultATM.builder()
+            .enabled(false)
+            .build();
+
+        var banknote = Banknote.builder()
+            .denomination(Denomination.DENOMINATION_2000)
+            .build();
+
+        // when / then
+        assertThatThrownBy(() -> service.deposit(Set.of(banknote), atm)).isInstanceOf(ATMDisabledException.class);
+    }
+
+    @Test
+    void withdrawWhenATMIsDisabled() throws Exception {
+        // given
+        var service = new ATMServiceImpl();
+        var atm = DefaultATM.builder()
+            .enabled(false)
+            .build();
+
+        // when / then
+        assertThatThrownBy(() -> service.withdraw(100, atm)).isInstanceOf(ATMDisabledException.class);
+    }
+
+    @Test
+    void checkBalanceWhenATMIsDisabled() throws Exception {
+        // given
+        var service = new ATMServiceImpl();
+        var atm = DefaultATM.builder()
+            .enabled(false)
+            .build();
+
+        // when / then
+        assertThatThrownBy(() -> service.checkBalance(atm)).isInstanceOf(ATMDisabledException.class);
     }
 }

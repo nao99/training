@@ -11,4 +11,8 @@ public class ATMException extends RuntimeException {
     public ATMException(String message) {
         super(message);
     }
+
+    public ATMException(String message, Throwable previous) {
+        super(message, previous);
+    }
 }

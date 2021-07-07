@@ -4,6 +4,7 @@ import com.luxoft.atm.domain.model.Denomination;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.io.Serializable;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -16,7 +17,7 @@ import java.util.UUID;
  */
 @Getter
 @Builder
-public class Banknote {
+public class Banknote implements Serializable {
     private final Denomination denomination;
     private final UUID uuid;
 

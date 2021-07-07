@@ -4,6 +4,7 @@ import com.luxoft.atm.domain.model.Denomination;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -15,7 +16,7 @@ import java.util.*;
  */
 @Getter
 @Builder
-public class DefaultBanknotesBox implements BanknotesBox {
+public class DefaultBanknotesBox implements BanknotesBox, Serializable {
     private final Denomination denomination;
     private final Deque<Banknote> banknotes;
     private final UUID uuid;
@@ -60,6 +61,11 @@ public class DefaultBanknotesBox implements BanknotesBox {
     @Override
     public boolean empty() {
         return banknotes.size() == 0;
+    }
+
+    @Override
+    public int size() {
+        return banknotes.size();
     }
 
     @Override

@@ -50,6 +50,13 @@ public interface BanknotesBox {
     boolean empty();
 
     /**
+     * Gets a size of this box
+     *
+     * @return a size of this box
+     */
+    int size();
+
+    /**
      * Gets a {@link Comparator} to compare 2 boxes <br>
      * Compares by denomination (DESC)
      *

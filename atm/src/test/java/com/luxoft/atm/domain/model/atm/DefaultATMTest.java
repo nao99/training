@@ -1,8 +1,11 @@
 package com.luxoft.atm.domain.model.atm;
 
 import com.luxoft.atm.domain.model.Denomination;
+import com.luxoft.atm.domain.model.atm.history.ATMHistory;
+import com.luxoft.atm.domain.model.atm.history.ATMHistoryEmptyException;
 import com.luxoft.atm.domain.model.banknote.Banknote;
 import com.luxoft.atm.domain.model.banknote.BanknotesBox;
+import com.luxoft.atm.domain.model.banknote.Box;
 import com.luxoft.atm.domain.model.banknote.DefaultBanknotesBox;
 import org.junit.jupiter.api.Test;
 
@@ -61,7 +64,8 @@ public class DefaultATMTest {
         }};
 
         var atm = DefaultATM.builder()
-            .banknoteBoxes(banknotesBoxes)
+            .box(Box.builder().banknoteBoxes(banknotesBoxes).build())
+            .enabled(true)
             .build();
 
         // when
@@ -85,10 +89,35 @@ public class DefaultATMTest {
             .build();
 
         var atm = DefaultATM.builder()
+            .enabled(true)
             .build();
 
         // when / then
         assertThatThrownBy(() -> atm.take(banknote100)).isInstanceOf(ATMBanknotesBoxNotFoundException.class);
+    }
+
+    @Test
+    void takeWhenATMIsDisabled() throws Exception {
+        // given
+        var banknotesBox100 = DefaultBanknotesBox.builder()
+            .denomination(Denomination.DENOMINATION_100)
+            .build();
+
+        Set<BanknotesBox> banknotesBoxes = new HashSet<>() {{
+            add(banknotesBox100);
+        }};
+
+        var banknote100 = Banknote.builder()
+            .denomination(Denomination.DENOMINATION_100)
+            .build();
+
+        var atm = DefaultATM.builder()
+            .box(Box.builder().banknoteBoxes(banknotesBoxes).build())
+            .enabled(false)
+            .build();
+
+        // when / then
+        assertThatThrownBy(() -> atm.take(banknote100)).isInstanceOf(ATMDisabledException.class);
     }
 
     @Test
@@ -135,7 +164,8 @@ public class DefaultATMTest {
         }};
 
         var atm = DefaultATM.builder()
-            .banknoteBoxes(banknotesBoxes)
+            .box(Box.builder().banknoteBoxes(banknotesBoxes).build())
+            .enabled(true)
             .build();
 
         // when
@@ -166,6 +196,7 @@ public class DefaultATMTest {
     public void giveWhenSumIsNegative() throws Exception {
         // given
         var atm = DefaultATM.builder()
+            .enabled(true)
             .build();
 
         // when / then
@@ -176,6 +207,7 @@ public class DefaultATMTest {
     public void giveWhenSumIsZero() throws Exception {
         // given
         var atm = DefaultATM.builder()
+            .enabled(true)
             .build();
 
         // when / then
@@ -208,7 +240,8 @@ public class DefaultATMTest {
         }};
 
         var atm = DefaultATM.builder()
-            .banknoteBoxes(banknoteBoxes)
+            .box(Box.builder().banknoteBoxes(banknoteBoxes).build())
+            .enabled(true)
             .build();
 
         // when / then
@@ -266,7 +299,8 @@ public class DefaultATMTest {
         }};
 
         var atm = DefaultATM.builder()
-            .banknoteBoxes(banknoteBoxes)
+            .box(Box.builder().banknoteBoxes(banknoteBoxes).build())
+            .enabled(true)
             .build();
 
         // when
@@ -282,10 +316,22 @@ public class DefaultATMTest {
     public void giveWhenBalanceIsNotEnough() throws Exception {
         // given
         var atm = DefaultATM.builder()
+            .enabled(true)
             .build();
 
         // when / then
         assertThatThrownBy(() -> atm.give(100)).isInstanceOf(ATMInsufficientBalanceException.class);
+    }
+
+    @Test
+    void giveWhenATMIsDisabled() throws Exception {
+        // given
+        var atm = DefaultATM.builder()
+            .enabled(false)
+            .build();
+
+        // when / then
+        assertThatThrownBy(() -> atm.give(100)).isInstanceOf(ATMDisabledException.class);
     }
 
     @Test
@@ -318,7 +364,8 @@ public class DefaultATMTest {
         }};
 
         var atm = DefaultATM.builder()
-            .banknoteBoxes(banknotesBoxes)
+            .box(Box.builder().banknoteBoxes(banknotesBoxes).build())
+            .enabled(true)
             .build();
 
         atm.take(banknote100);
@@ -335,6 +382,7 @@ public class DefaultATMTest {
     public void getBalanceWhenBalanceIsZero() throws Exception {
         // given
         var atm = DefaultATM.builder()
+            .enabled(true)
             .build();
 
         // when
@@ -342,5 +390,199 @@ public class DefaultATMTest {
 
         // then
         assertThat(balance).isEqualTo(0);
+    }
+
+    @Test
+    void getBalanceWhenATMIsDisabled() throws Exception {
+        // given
+        var atm = DefaultATM.builder()
+            .enabled(false)
+            .build();
+
+        // when / then
+        assertThatThrownBy(atm::getBalance).isInstanceOf(ATMDisabledException.class);
+    }
+
+    @Test
+    void backup() throws Exception {
+        // given
+        var banknotesBox100 = DefaultBanknotesBox.builder()
+            .denomination(Denomination.DENOMINATION_100)
+            .build();
+
+        Set<BanknotesBox> banknoteBoxes = new HashSet<>();
+        banknoteBoxes.add(banknotesBox100);
+
+        var box = Box.builder()
+            .banknoteBoxes(banknoteBoxes)
+            .build();
+
+        var history = ATMHistory.builder()
+            .build();
+
+        // when / then
+        var atm = DefaultATM.builder()
+            .box(box)
+            .enabled(true)
+            .history(history)
+            .build();
+
+        assertThat(history.size()).isZero();
+
+        atm.backup();
+        assertThat(history.size()).isEqualTo(1);
+
+        var banknote100 = Banknote.builder()
+            .denomination(Denomination.DENOMINATION_100)
+            .build();
+
+        atm.take(banknote100);
+
+        var historyBox = history.pop().getBox();
+        assertThat(historyBox).isNotSameAs(box);
+
+        var banknoteBox = historyBox.getBanknoteBoxes().iterator().next();
+
+        assertThat(banknoteBox).isNotSameAs(banknotesBox100);
+        assertThat(banknoteBox.empty()).isTrue();
+    }
+
+    @Test
+    void backupWhenATMIsDisabled() throws Exception {
+        // given
+        var atm = DefaultATM.builder()
+            .enabled(false)
+            .build();
+
+        // when / then
+        assertThatThrownBy(atm::backup).isInstanceOf(ATMDisabledException.class);
+    }
+
+    @Test
+    void restore() throws Exception {
+        // given
+        var banknotesBox100 = DefaultBanknotesBox.builder()
+            .denomination(Denomination.DENOMINATION_100)
+            .build();
+
+        Set<BanknotesBox> banknoteBoxes = new HashSet<>();
+        banknoteBoxes.add(banknotesBox100);
+
+        var box = Box.builder()
+            .banknoteBoxes(banknoteBoxes)
+            .build();
+
+        var history = ATMHistory.builder()
+            .build();
+
+        var atm = DefaultATM.builder()
+            .box(box)
+            .enabled(true)
+            .history(history)
+            .build();
+
+        var banknote100 = Banknote.builder()
+            .denomination(Denomination.DENOMINATION_100)
+            .build();
+
+        atm.take(banknote100);
+        atm.backup();
+
+        // when / then
+        atm.restore();
+        assertThat(history.size()).isZero();
+
+        var restoredBox = atm.getBox();
+
+        assertThat(box).isNotSameAs(restoredBox);
+        assertThat(restoredBox.size()).isEqualTo(1);
+
+        var restoredBanknotesBox = restoredBox.getBanknoteBoxes().iterator().next();
+
+        assertThat(restoredBanknotesBox).isNotSameAs(banknotesBox100);
+        assertThat(restoredBanknotesBox.size()).isEqualTo(1);
+
+        var banknote = restoredBanknotesBox.give();
+
+        assertThat(banknote).isNotSameAs(banknote100);
+        assertThat(banknote.getUuid()).isEqualTo(banknote100.getUuid());
+    }
+
+    @Test
+    void restoreWhenHistoryIsEmpty() throws Exception {
+        // given
+        var atm = DefaultATM.builder()
+            .enabled(true)
+            .build();
+
+        // when / then
+        assertThatThrownBy(atm::restore).isInstanceOf(ATMHistoryEmptyException.class);
+    }
+
+    @Test
+    void restoreWhenATMIsDisabled() throws Exception {
+        // given
+        var atm = DefaultATM.builder()
+            .enabled(false)
+            .build();
+
+        // when / then
+        assertThatThrownBy(atm::restore).isInstanceOf(ATMDisabledException.class);
+    }
+
+    @Test
+    void disable() throws Exception {
+        // given
+        var atm = DefaultATM.builder()
+            .enabled(true)
+            .build();
+
+        // when
+        atm.disable();
+
+        // then
+        assertThat(atm.enabled()).isFalse();
+    }
+
+    @Test
+    void disableWhenATMIsDisabled() throws Exception {
+        // given
+        var atm = DefaultATM.builder()
+            .enabled(false)
+            .build();
+
+        // when
+        atm.disable();
+
+        // then
+        assertThat(atm.enabled()).isFalse();
+    }
+
+    @Test
+    void enable() throws Exception {
+        // given
+        var atm = DefaultATM.builder()
+            .enabled(false)
+            .build();
+
+        // when
+        atm.enable();
+
+        // then
+        assertThat(atm.enabled()).isTrue();
+    }
+
+    @Test
+    void enableWheATMIsEnabled() throws Exception {
+        // given
+        var atm = DefaultATM.builder()
+            .enabled(true)
+            .build();
+
+        // when
+        atm.enable();
+
+        // then
+        assertThat(atm.enabled()).isTrue();
     }
 }

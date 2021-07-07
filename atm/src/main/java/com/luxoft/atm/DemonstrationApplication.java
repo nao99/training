@@ -8,6 +8,7 @@ import com.luxoft.atm.domain.model.atm.ATMException;
 import com.luxoft.atm.domain.model.atm.DefaultATM;
 import com.luxoft.atm.domain.model.banknote.Banknote;
 import com.luxoft.atm.domain.model.banknote.BanknotesBox;
+import com.luxoft.atm.domain.model.banknote.Box;
 import com.luxoft.atm.domain.model.banknote.DefaultBanknotesBox;
 
 import java.util.HashSet;
@@ -48,7 +49,8 @@ public class DemonstrationApplication {
 
         // 2. Create an ATM
         ATM atm = DefaultATM.builder()
-            .banknoteBoxes(banknoteBoxes)
+            .box(Box.builder().banknoteBoxes(banknoteBoxes).build())
+            .enabled(true)
             .build();
 
         // 3. Create an ATMService
@@ -103,5 +105,54 @@ public class DemonstrationApplication {
         // 10. Check ATM balance again
         atmBalance = service.checkBalance(atm);
         System.out.printf("ATM Balance: %d%n", atmBalance);
+
+        // 11. Disable the ATM
+        service.disable(atm);
+
+        // 12. Try to withdraw money
+        try {
+            service.withdraw(500, atm);
+            System.out.println(withdrawnBanknotes);
+        } catch (ATMException e) {
+            System.out.println(e.getMessage());
+        }
+
+        // 13. Try to do backup
+        try {
+            service.backup(atm);
+        } catch (ATMException e) {
+            System.out.println(e.getMessage());
+        }
+
+        // 14. Enable this ATM
+        service.enable(atm);
+
+        // 15. Try to do backup again
+        service.backup(atm);
+
+        // 16. Deposit a little bit money
+        var banknote1 = Banknote.builder()
+            .denomination(Denomination.DENOMINATION_5000)
+            .build();
+
+        service.deposit(Set.of(banknote1), atm);
+
+        // 17. Show balance
+        atmBalance = service.checkBalance(atm);
+        System.out.printf("ATM Balance: %d%n", atmBalance);
+
+        // 18. Restore the previous state
+        service.restore(atm);
+
+        // 19. Show balance again
+        atmBalance = service.checkBalance(atm);
+        System.out.printf("ATM Balance: %d%n", atmBalance);
+
+        // 20. Try to restore again
+        try {
+            service.restore(atm);
+        } catch (ATMException e) {
+            System.out.println(e.getMessage());
+        }
     }
 }

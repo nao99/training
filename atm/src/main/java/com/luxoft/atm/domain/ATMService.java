@@ -1,7 +1,9 @@
 package com.luxoft.atm.domain;
 
 import com.luxoft.atm.domain.model.atm.ATM;
+import com.luxoft.atm.domain.model.atm.ATMDisabledException;
 import com.luxoft.atm.domain.model.atm.ATMException;
+import com.luxoft.atm.domain.model.atm.history.ATMHistoryEmptyException;
 import com.luxoft.atm.domain.model.banknote.Banknote;
 
 import java.util.List;
@@ -23,7 +25,7 @@ public interface ATMService {
      *
      * @return a set of non deposited banknotes
      */
-    Set<Banknote> deposit(Set<Banknote> banknotes, ATM atm);
+    Set<Banknote> deposit(Set<Banknote> banknotes, ATM atm) throws ATMDisabledException;
 
     /**
      * Withdraws a sum from an {@link ATM}
@@ -42,5 +44,25 @@ public interface ATMService {
      * @param atm an ATM
      * @return an ATM balance
      */
-    int checkBalance(ATM atm);
+    int checkBalance(ATM atm) throws ATMDisabledException;
+
+    /**
+     * Does a backup of an {@link ATM}
+     */
+    void backup(ATM atm) throws ATMDisabledException;
+
+    /**
+     * Restores a last done backup of an {@link ATM}
+     */
+    void restore(ATM atm) throws ATMHistoryEmptyException, ATMDisabledException;
+
+    /**
+     * Disables an {@link ATM}
+     */
+    void disable(ATM atm);
+
+    /**
+     * Enables an {@link ATM}
+     */
+    void enable(ATM atm);
 }
