@@ -1,0 +1,23 @@
+plugins {
+    id "java"
+}
+
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
+
+dependencies {
+    implementation "ch.qos.logback:logback-classic"
+    implementation "org.apache.commons:commons-lang3"
+
+    testImplementation "org.junit.jupiter:junit-jupiter-api"
+    testImplementation "org.junit.jupiter:junit-jupiter-engine"
+
+    testImplementation "org.assertj:assertj-core"
+
+    compileOnly "org.projectlombok:lombok"
+    annotationProcessor "org.projectlombok:lombok"
+}
+
+test {
+    useJUnitPlatform()
+}
