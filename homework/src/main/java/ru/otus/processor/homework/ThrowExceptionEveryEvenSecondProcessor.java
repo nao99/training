@@ -2,7 +2,7 @@ package ru.otus.processor.homework;
 
 import ru.otus.model.Message;
 import ru.otus.processor.Processor;
-import ru.otus.time.CurrentSecondsDefiner;
+import ru.otus.time.CurrentTimeDefiner;
 
 /**
  * ThrowExceptionEveryEvenSecondProcessor class
@@ -12,16 +12,18 @@ import ru.otus.time.CurrentSecondsDefiner;
  * @since   2021-07-12
  */
 public class ThrowExceptionEveryEvenSecondProcessor implements Processor {
-    private final CurrentSecondsDefiner currentSecondsDefiner;
+    private final CurrentTimeDefiner currentSecondsDefiner;
 
-    public ThrowExceptionEveryEvenSecondProcessor(CurrentSecondsDefiner currentSecondsDefiner) {
+    public ThrowExceptionEveryEvenSecondProcessor(CurrentTimeDefiner currentSecondsDefiner) {
         this.currentSecondsDefiner = currentSecondsDefiner;
     }
 
     @Override
     public Message process(Message message) {
-        var currentSeconds = currentSecondsDefiner.define();
-        if (currentSeconds % 2 == 0) {
+        var currentTime = currentSecondsDefiner.time();
+        var currentTimeSecond = currentTime.getSecond();
+
+        if (currentTimeSecond % 2 == 0) {
             throw new EvenSecondException("Unable to process message on even seconds");
         }
 

@@ -9,7 +9,7 @@ import ru.otus.processor.LoggerProcessor;
 import ru.otus.processor.ProcessorConcatFields;
 import ru.otus.processor.homework.Swap11And12FieldsProcessor;
 import ru.otus.processor.homework.ThrowExceptionEveryEvenSecondProcessor;
-import ru.otus.time.CurrentSecondsDefiner;
+import ru.otus.time.CurrentTimeDefinerImpl;
 
 import java.util.List;
 
@@ -19,7 +19,7 @@ public class HomeWork {
     public static void main(String[] args) {
         var processors = List.of(
             new ProcessorConcatFields(),
-            new ThrowExceptionEveryEvenSecondProcessor(new CurrentSecondsDefiner()),
+            new ThrowExceptionEveryEvenSecondProcessor(new CurrentTimeDefinerImpl()),
             new LoggerProcessor(new Swap11And12FieldsProcessor())
         );
 

@@ -1,9 +1,9 @@
 package ru.otus.model;
 
-import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
-public class ObjectForMessage implements Serializable {
+public class ObjectForMessage implements Cloneable {
     private List<String> data;
 
     public List<String> getData() {
@@ -12,5 +12,13 @@ public class ObjectForMessage implements Serializable {
 
     public void setData(List<String> data) {
         this.data = data;
+    }
+
+    @Override
+    public ObjectForMessage clone() {
+        var objectForMessage = new ObjectForMessage();
+        objectForMessage.setData(new ArrayList<>(this.data));
+
+        return objectForMessage;
     }
 }

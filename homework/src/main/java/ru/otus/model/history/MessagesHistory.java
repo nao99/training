@@ -2,7 +2,9 @@ package ru.otus.model.history;
 
 import ru.otus.model.Message;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * MessagesHistory class
@@ -12,34 +14,23 @@ import java.util.*;
  * @since   2021-07-12
  */
 public class MessagesHistory {
-    private final Map<Long, Deque<Message>> messagesMap;
+    private final List<Message> messages;
 
-    private MessagesHistory(Map<Long, Deque<Message>> messagesMap) {
-        this.messagesMap = messagesMap == null ? new HashMap<>() : messagesMap;
+    private MessagesHistory(List<Message> messages) {
+        this.messages = messages == null ? new ArrayList<>() : messages;
     }
 
     public static MessagesHistory of() {
-        return new MessagesHistory(null);
+        return new MessagesHistory(new ArrayList<>());
     }
 
     public void push(Message message) {
-        Long messageId = message.getId();
-
-        var messages = messagesMap.computeIfAbsent(messageId, k -> new ArrayDeque<>());
-        messages.push(message);
+        messages.add(message);
     }
 
-    public Message getLast(Long messageId) throws MessagesHistoryEmptyException {
-        var messages = messagesMap.get(messageId);
-        if (messages == null) {
-            var errorMessage = String.format("Messages history for %d message not found", messageId);
-            throw new MessagesHistoryNotFoundException(errorMessage);
-        }
-
-        try {
-            return messages.getLast();
-        } catch (NoSuchElementException e) {
-            throw new MessagesHistoryEmptyException("Messages history is empty now", e);
-        }
+    public Optional<Message> get(long messageId) {
+        return messages.stream()
+            .filter(m -> m.getId() == messageId)
+            .findFirst();
     }
 }

@@ -16,10 +16,6 @@ public class Swap11And12FieldsProcessor implements Processor {
         var messageField11 = message.getField11();
         var messageField12 = message.getField12();
 
-        if (messageField11 == null && messageField12 == null) {
-            return message;
-        }
-
         var messageBuilder = message.toBuilder();
         messageBuilder
             .field11(messageField12)

@@ -46,27 +46,6 @@ class Swap11And12FieldsProcessorTest {
             .isSameAs(messageWithSwappedFields.getField11());
     }
 
-    @DisplayName("Should not swap field11 and field12 when both are nullable")
-    @Test
-    void shouldNotSwapField11AndField12WhenBothAreNullable() throws Exception {
-        // given
-        var message = new Message.Builder(1L)
-            .build();
-
-        // when
-        var messageWithNotSwappedFields = processor.process(message);
-
-        // then
-        assertThat(message)
-            .isSameAs(messageWithNotSwappedFields);
-
-        assertThat(message.getField11())
-            .isSameAs(messageWithNotSwappedFields.getField11());
-
-        assertThat(message.getField12())
-            .isSameAs(messageWithNotSwappedFields.getField12());
-    }
-
     @DisplayName("Should swap field11 and field12 when field11 is nullable")
     @Test
     void shouldSwapField11AndField12WhenField11IsNullable() throws Exception {

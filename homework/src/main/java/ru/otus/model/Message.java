@@ -1,8 +1,6 @@
 package ru.otus.model;
 
-import java.io.Serializable;
-
-public class Message implements Serializable {
+public class Message implements Cloneable {
     private final long id;
     private final String field1;
     private final String field2;
@@ -104,6 +102,14 @@ public class Message implements Serializable {
 
     public ObjectForMessage getField13() {
         return field13;
+    }
+
+    @Override
+    public Message clone() {
+        var field13Copy = field13 == null ? null : field13.clone();
+        return toBuilder()
+            .field13(field13Copy)
+            .build();
     }
 
     @Override
