@@ -1,26 +1,21 @@
 package com.luxoft.orders.domain;
 
-import com.luxoft.orders.PostgreSQLContainerShared;
+import com.luxoft.orders.DatabaseTest;
 import com.luxoft.orders.api.CreateOrderDto;
 import com.luxoft.orders.api.CreateOrderItemDto;
 import com.luxoft.orders.domain.model.Order;
 import com.luxoft.orders.domain.model.OrderItem;
-import com.luxoft.orders.persistent.api.JdbcOrderItemRepository;
-import com.luxoft.orders.persistent.api.JdbcOrderRepository;
-import com.luxoft.orders.persistent.query.JdbcTemplateImpl;
-import com.luxoft.orders.persistent.transaction.JdbcTransactionRunner;
-import com.zaxxer.hikari.HikariDataSource;
+import com.luxoft.orders.persistent.api.JpaOrderItemRepository;
+import com.luxoft.orders.persistent.api.JpaOrderRepository;
+import com.luxoft.orders.persistent.transaction.JpaTransactionRunner;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.containers.PostgreSQLContainer;
-
-import javax.sql.DataSource;
 
 import java.math.BigDecimal;
-import java.sql.SQLException;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * OrderServiceImplTest class
@@ -29,43 +24,24 @@ import static org.junit.jupiter.api.Assertions.*;
  * @version 1.0.0
  * @since   2021-06-24
  */
-class OrderServiceImplTest {
-    private static final PostgreSQLContainer<PostgreSQLContainerShared> POSTGRESQL_CONTAINER =
-        PostgreSQLContainerShared.getInstance();
-
-    static {
-        POSTGRESQL_CONTAINER.start();
-    }
-
-    private DataSource dataSource;
-    private JdbcOrderItemRepository orderItemRepository;
-    private JdbcOrderRepository orderRepository;
+class OrderServiceImplTest extends DatabaseTest {
+    private JpaOrderItemRepository orderItemRepository;
+    private JpaOrderRepository orderRepository;
 
     private OrderServiceImpl service;
 
     @BeforeEach
     public void setUp() throws Exception {
-        var hikariDataSource = new HikariDataSource();
+        var transactionRunner = new JpaTransactionRunner(sessionFactory);
 
-        hikariDataSource.setJdbcUrl(POSTGRESQL_CONTAINER.getJdbcUrl());
-        hikariDataSource.setUsername(POSTGRESQL_CONTAINER.getUsername());
-        hikariDataSource.setPassword(POSTGRESQL_CONTAINER.getPassword());
-        hikariDataSource.setMaximumPoolSize(2);
-        hikariDataSource.setAutoCommit(false);
-
-        dataSource = hikariDataSource;
-
-        var transactionRunner = new JdbcTransactionRunner(dataSource);
-        var jdbcTemplate = new JdbcTemplateImpl();
-
-        orderItemRepository = new JdbcOrderItemRepository(jdbcTemplate);
-        orderRepository = new JdbcOrderRepository(jdbcTemplate, orderItemRepository);
+        orderItemRepository = new JpaOrderItemRepository();
+        orderRepository = new JpaOrderRepository();
 
         service = new OrderServiceImpl(transactionRunner, orderRepository, orderItemRepository);
     }
 
     @Test
-    public void getOrderWhenOrderExists() throws Exception {
+    void getOrderWhenOrderExists() throws Exception {
         // given
         var order = createOrder("Alex");
 
@@ -73,21 +49,24 @@ class OrderServiceImplTest {
         var orderResult = service.getOrder(order.getId());
 
         // then
-        assertEquals(order.getId(), orderResult.getId());
-        assertEquals(order.getUsername(), orderResult.getUsername());
-        assertEquals(order.isDone(), orderResult.isDone());
-        assertEquals(order.getUpdatedAt(), orderResult.getUpdatedAt());
-        assertEquals(order.getItems(), orderResult.getItems());
+        assertThat(orderResult.getId())
+            .isEqualTo(order.getId());
+
+        assertThat(orderResult.getUsername())
+            .isEqualTo(order.getUsername());
+
+        assertThat(orderResult.isDone())
+            .isEqualTo(order.isDone());
     }
 
     @Test
-    public void getOrderWhenOrderNotExists() throws Exception {
+    void getOrderWhenOrderNotExists() throws Exception {
         // when / then
         assertThrows(OrderNotFoundException.class, () -> service.getOrder(-1L));
     }
 
     @Test
-    public void createOrder() throws Exception {
+    void createOrder() throws Exception {
         // given
         var createOrderItemDto = new CreateOrderItemDto();
 
@@ -104,22 +83,35 @@ class OrderServiceImplTest {
         var createdOrder = service.createOrder(createOrderDto);
 
         // then
-        assertNotNull(createdOrder.getId());
-        assertNotNull(createdOrder.getUpdatedAt());
-        assertFalse(createdOrder.isDone());
+        assertThat(createdOrder.getId())
+            .isNotNull();
 
-        assertEquals(createOrderDto.getUsername(), createdOrder.getUsername());
-        assertEquals(1, createdOrder.getItems().size());
+        assertThat(createdOrder.getUpdatedAt())
+            .isNotNull();
+
+        assertThat(createdOrder.isDone())
+            .isFalse();
+
+        assertThat(createdOrder.getUsername())
+            .isEqualTo(createOrderDto.getUsername());
+
+        assertThat(createdOrder.getItems().size())
+            .isEqualTo(1);
 
         var createdOrderItem = createdOrder.getItems().get(0);
 
-        assertEquals(createOrderItemDto.getName(), createdOrderItem.getName());
-        assertEquals(createOrderItemDto.getCount(), createdOrderItem.getCount());
-        assertEquals(createOrderItemDto.getPrice(), createdOrderItem.getPrice());
+        assertThat(createdOrderItem.getName())
+            .isEqualTo(createOrderItemDto.getName());
+
+        assertThat(createdOrderItem.getCount())
+            .isEqualTo(createOrderItemDto.getCount());
+
+        assertThat(createdOrderItem.getPrice())
+            .isEqualTo(createOrderItemDto.getPrice());
     }
 
     @Test
-    public void addOrderItemWhenOrderExists() throws Exception {
+    void addOrderItemWhenOrderExists() throws Exception {
         // given
         var order = createOrder("Alex");
         var createOrderItemDto = new CreateOrderItemDto();
@@ -134,18 +126,23 @@ class OrderServiceImplTest {
         var selectedOrder = service.getOrder(order.getId());
 
         // then
-        assertEquals(1, selectedOrder.getItems().size());
+        assertThat(selectedOrder.getItems().size())
+            .isEqualTo(1);
 
         var selectedOrderItem = selectedOrder.getItems().get(0);
 
-        assertEquals(createOrderItemDto.getName(), selectedOrderItem.getName());
-        assertEquals(createOrderItemDto.getCount(), selectedOrderItem.getCount());
+        assertThat(selectedOrderItem.getName())
+            .isEqualTo(createOrderItemDto.getName());
 
-        assertEquals(0, selectedOrderItem.getPrice().compareTo(createOrderItemDto.getPrice()));
+        assertThat(selectedOrderItem.getCount())
+            .isEqualTo(createOrderItemDto.getCount());
+
+        assertThat(selectedOrderItem.getPrice().compareTo(createOrderItemDto.getPrice()))
+            .isEqualTo(0);
     }
 
     @Test
-    public void addOrderItemWhenOrderNotExists() throws Exception {
+    void addOrderItemWhenOrderNotExists() throws Exception {
         // given
         var createOrderItemDto = new CreateOrderItemDto();
 
@@ -158,12 +155,12 @@ class OrderServiceImplTest {
     }
 
     @Test
-    public void changeOrderItemCountWhenOrderItemExists() throws Exception {
+    void changeOrderItemCountWhenOrderItemExists() throws Exception {
         // given
         var expectedCount = 15;
 
         var order = createOrder("Alex");
-        var orderItem = createOrderItem(order.getId(), "Shoes", 10, BigDecimal.valueOf(1000L));
+        var orderItem = createOrderItem(order, "Shoes", 10, BigDecimal.valueOf(1000L));
 
         // when
         service.changeOrderItemCount(orderItem.getId(), expectedCount);
@@ -172,32 +169,51 @@ class OrderServiceImplTest {
         var selectedOrderItem = selectedOrder.getItems().get(0);
 
         // then
-        assertEquals(orderItem.getId(), selectedOrderItem.getId());
-        assertEquals(orderItem.getOrderId(), selectedOrderItem.getOrderId());
-        assertEquals(orderItem.getName(), selectedOrderItem.getName());
-        assertEquals(expectedCount, selectedOrderItem.getCount());
-        assertEquals(0, selectedOrderItem.getPrice().compareTo(orderItem.getPrice()));
+        assertThat(selectedOrderItem.getId())
+            .isEqualTo(orderItem.getId());
+
+        assertThat(selectedOrderItem.getOrder().getId())
+            .isEqualTo(orderItem.getOrder().getId());
+
+        assertThat(selectedOrderItem.getName())
+            .isEqualTo(orderItem.getName());
+
+        assertThat(selectedOrderItem.getPrice())
+            .isEqualByComparingTo(orderItem.getPrice());
+
+        assertThat(selectedOrderItem.getCount())
+            .isEqualTo(expectedCount);
     }
 
     @Test
-    public void changeOrderItemCountWhenOrderItemNotExists() throws Exception {
+    void changeOrderItemCountWhenOrderItemNotExists() throws Exception {
         // when / then
         assertThrows(OrderItemNotFoundException.class, () -> service.changeOrderItemCount(-1L, 15));
     }
 
     @Test
-    public void doneAllOrders() throws Exception {
+    void doneAllOrders() throws Exception {
         // given
-        var order = createOrder("Alex");
+        var order1 = createOrder("Alex");
+        var order2 = createOrder("Alex");
+        var order3 = createOrder("Alex");
 
         // when
         service.doneAllOrders();
 
-        var selectedOrder = service.getOrder(order.getId());
+        var selectedOrder1 = service.getOrder(order1.getId());
+        var selectedOrder2 = service.getOrder(order2.getId());
+        var selectedOrder3 = service.getOrder(order3.getId());
 
         // then
-        assertFalse(order.isDone());
-        assertTrue(selectedOrder.isDone());
+        assertThat(selectedOrder1.isDone())
+            .isTrue();
+
+        assertThat(selectedOrder2.isDone())
+            .isTrue();
+
+        assertThat(selectedOrder3.isDone())
+            .isTrue();
     }
 
     /**
@@ -205,19 +221,19 @@ class OrderServiceImplTest {
      * Created order will be saved in a db
      *
      * @param username an order username
-     *
-     * @return a saved order
-     * @throws SQLException if unable to commit or open connection
+     * @return a created order
      */
-    private Order createOrder(String username) throws SQLException {
-        Order order;
-        try (var connection = dataSource.getConnection()) {
-            var orderToSave = Order.builder()
-                .username(username)
-                .build();
+    private Order createOrder(String username) {
+        var order = Order.builder()
+            .username(username)
+            .build();
 
-            order = orderRepository.save(connection, orderToSave);
-            connection.commit();
+        try (var session = sessionFactory.openSession()) {
+            var transaction = session.getTransaction();
+            transaction.begin();
+
+            orderRepository.save(session, order);
+            transaction.commit();
         }
 
         return order;
@@ -227,26 +243,27 @@ class OrderServiceImplTest {
      * Creates an {@link OrderItem} for testing purposes
      * Created order item will be saved in a db
      *
-     * @param orderId an order id
-     * @param name    a name
-     * @param count   a count
-     * @param price   a price
+     * @param order an order
+     * @param name  a name
+     * @param count a count
+     * @param price a price
      *
      * @return a saved order item
-     * @throws SQLException if unable to commit or open connection
      */
-    private OrderItem createOrderItem(Long orderId, String name, int count, BigDecimal price) throws SQLException {
-        OrderItem orderItem;
-        try (var connection = dataSource.getConnection()) {
-            var orderItemToSave = OrderItem.builder()
-                .orderId(orderId)
-                .name(name)
-                .count(count)
-                .price(price)
-                .build();
+    private OrderItem createOrderItem(Order order, String name, int count, BigDecimal price) {
+        var orderItem = OrderItem.builder()
+            .order(order)
+            .name(name)
+            .count(count)
+            .price(price)
+            .build();
 
-            orderItem = orderItemRepository.save(connection, orderItemToSave);
-            connection.commit();
+        try (var session = sessionFactory.openSession()) {
+            var transaction = session.getTransaction();
+            transaction.begin();
+
+            orderItemRepository.save(session, orderItem);
+            transaction.commit();
         }
 
         return orderItem;

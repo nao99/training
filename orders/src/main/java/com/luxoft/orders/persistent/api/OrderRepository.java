@@ -2,8 +2,9 @@ package com.luxoft.orders.persistent.api;
 
 import com.luxoft.orders.domain.model.Order;
 import com.luxoft.orders.persistent.DataAccessException;
+import org.hibernate.LockMode;
+import org.hibernate.Session;
 
-import java.sql.Connection;
 import java.util.Optional;
 
 /**
@@ -17,63 +18,49 @@ public interface OrderRepository {
     /**
      * Finds an {@link Order} by an id
      *
-     * @param connection a connection
-     * @param id         an order id
+     * @param session  a session
+     * @param id       an order id
+     * @param lockMode a lock mode
      *
      * @return an order if exists
-     * @throws DataAccessException if something was wrong
      */
-    Optional<Order> findById(Connection connection, Long id) throws DataAccessException;
-
-    /**
-     * Checks if an {@link Order} exists
-     *
-     * @param connection a connection
-     * @param id         an order id
-     *
-     * @return true if exists or false else
-     * @throws DataAccessException if something was wrong
-     */
-    boolean checkExistsByIdAndLock(Connection connection, Long id) throws DataAccessException;
+    Optional<Order> findById(Session session, Long id, LockMode lockMode);
 
     /**
      * Saves an {@link Order}
      *
-     * @param connection a connection
-     * @param order      an order
-     *
-     * @return a saved order
-     * @throws DataAccessException if something was wrong
+     * @param session a session
+     * @param order   an order
      */
-    Order save(Connection connection, Order order) throws DataAccessException;
+    void save(Session session, Order order);
 
     /**
      * Updates an {@link Order} timestamp
      *
-     * @param connection a connection
-     * @param orderId    an order id
+     * @param session a session
+     * @param orderId an order id
      *
      * @throws DataAccessException if something was wrong
      */
-    void updateOrderTimestamp(Connection connection, Long orderId) throws DataAccessException;
+    void updateOrderTimestamp(Session session, Long orderId) throws DataAccessException;
 
     /**
      * Finds a count of {@link Order}s
      *
-     * @param connection a connection
+     * @param session a session
      *
      * @return a count of orders
      * @throws DataAccessException if something was wrong
      */
-    long countNonDone(Connection connection) throws DataAccessException;
+    long countNonDone(Session session) throws DataAccessException;
 
     /**
      * Marks as done all non done {@link Order}s
      *
-     * @param connection a connection
-     * @param batchSize  a size of batch
+     * @param session   a session
+     * @param batchSize a size of batch
      *
      * @throws DataAccessException if something was wrong
      */
-    void doneAllNonDoneOrdersBatched(Connection connection, int batchSize) throws DataAccessException;
+    void doneAllNonDoneOrdersBatched(Session session, int batchSize) throws DataAccessException;
 }

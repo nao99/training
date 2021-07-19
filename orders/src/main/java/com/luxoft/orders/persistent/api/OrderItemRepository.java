@@ -1,10 +1,9 @@
 package com.luxoft.orders.persistent.api;
 
 import com.luxoft.orders.domain.model.OrderItem;
-import com.luxoft.orders.persistent.DataAccessException;
+import org.hibernate.LockMode;
+import org.hibernate.Session;
 
-import java.sql.Connection;
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -18,33 +17,19 @@ public interface OrderItemRepository {
     /**
      * Finds an {@link OrderItem} by id
      *
-     * @param connection a connection
-     * @param id         an order item id
+     * @param session  a session
+     * @param id       an order item id
+     * @param lockMode a lock mode
      *
      * @return an order item if exists
-     * @throws DataAccessException if something was wrong
      */
-    Optional<OrderItem> findByIdAndLock(Connection connection, Long id) throws DataAccessException;
-
-    /**
-     * Finds {@link OrderItem}s by order id
-     *
-     * @param connection a connection
-     * @param orderId    an order id
-     *
-     * @return a set of order items
-     * @throws DataAccessException if something was wrong
-     */
-    List<OrderItem> findByOrderId(Connection connection, Long orderId) throws DataAccessException;
+    Optional<OrderItem> findById(Session session, Long id, LockMode lockMode);
 
     /**
      * Saves an {@link OrderItem}
      *
-     * @param connection a connection
-     * @param item       an order item
-     *
-     * @return a saved order item
-     * @throws DataAccessException if something was wrong
+     * @param session a session
+     * @param item    an order item
      */
-    OrderItem save(Connection connection, OrderItem item) throws DataAccessException;
+    void save(Session session, OrderItem item);
 }
