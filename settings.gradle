@@ -2,4 +2,3 @@ rootProject.name = 'training'
 include 'orders'
 include 'atm'
 include 'robot'
-

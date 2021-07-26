@@ -11,7 +11,7 @@ import com.luxoft.robot.model.Robot;
  */
 public class DemonstrationApplication {
     public static void main(String[] args) throws InterruptedException {
-        var robot = new Robot();
+        var robot = new Robot(true);
         robot.walk();
 
         Thread.sleep(1000);
