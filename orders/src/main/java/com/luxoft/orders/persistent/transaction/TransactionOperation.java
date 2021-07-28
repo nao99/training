@@ -1,6 +1,7 @@
 package com.luxoft.orders.persistent.transaction;
 
-import java.sql.Connection;
+import org.hibernate.Session;
+
 import java.util.function.Function;
 
 /**
@@ -10,5 +11,5 @@ import java.util.function.Function;
  * @version 1.0.0
  * @since   2021-06-20
  */
-public interface TransactionOperation<T> extends Function<Connection, T> {
+public interface TransactionOperation<T> extends Function<Session, T> {
 }

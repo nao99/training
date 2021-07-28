@@ -2,13 +2,14 @@ package com.luxoft.orders;
 
 import com.luxoft.orders.api.CreateOrderDto;
 import com.luxoft.orders.api.CreateOrderItemDto;
-import com.luxoft.orders.persistent.api.JdbcOrderItemRepository;
-import com.luxoft.orders.persistent.api.JdbcOrderRepository;
+import com.luxoft.orders.domain.model.Order;
+import com.luxoft.orders.domain.model.OrderItem;
 import com.luxoft.orders.domain.OrderServiceImpl;
+import com.luxoft.orders.persistent.api.JpaOrderItemRepository;
+import com.luxoft.orders.persistent.api.JpaOrderRepository;
 import com.luxoft.orders.persistent.migration.FlywayMigrationsExecutor;
-import com.luxoft.orders.persistent.query.JdbcTemplateImpl;
-import com.luxoft.orders.persistent.transaction.JdbcTransactionRunner;
-import com.zaxxer.hikari.HikariDataSource;
+import com.luxoft.orders.persistent.transaction.JpaTransactionRunner;
+import com.luxoft.orders.util.HibernateUtils;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -27,22 +28,15 @@ public class DemonstrationApplication {
 
     public static void main(String[] args) {
         // 0. Preparation
-        var dataSource = new HikariDataSource();
-
-        dataSource.setAutoCommit(false);
-        dataSource.setJdbcUrl(DB_URL);
-        dataSource.setUsername(DB_USERNAME);
-        dataSource.setPassword(DB_PASSWORD);
-
+        var sessionFactory = HibernateUtils.buildSessionFactory("hibernate.cfg.xml", Order.class, OrderItem.class);
         FlywayMigrationsExecutor.execute(DB_URL, DB_USERNAME, DB_PASSWORD);
 
-        var jdbcTemplate = new JdbcTemplateImpl();
-        var jdbcTransactionRunner = new JdbcTransactionRunner(dataSource);
+        var jpaTransactionRunner = new JpaTransactionRunner(sessionFactory);
 
-        var jdbcOrderItemRepository = new JdbcOrderItemRepository(jdbcTemplate);
-        var jdbcOrderRepository = new JdbcOrderRepository(jdbcTemplate, jdbcOrderItemRepository);
+        var jpaOrderItemRepository = new JpaOrderItemRepository();
+        var jpaOrderRepository = new JpaOrderRepository();
 
-        var orderService = new OrderServiceImpl(jdbcTransactionRunner, jdbcOrderRepository, jdbcOrderItemRepository);
+        var orderService = new OrderServiceImpl(jpaTransactionRunner, jpaOrderRepository, jpaOrderItemRepository);
 
         // 1. Create order
         var createOrderItemDtoShoes = new CreateOrderItemDto();

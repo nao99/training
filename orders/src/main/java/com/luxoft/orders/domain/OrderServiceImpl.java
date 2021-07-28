@@ -7,6 +7,7 @@ import com.luxoft.orders.domain.model.OrderItem;
 import com.luxoft.orders.persistent.api.OrderItemRepository;
 import com.luxoft.orders.persistent.api.OrderRepository;
 import com.luxoft.orders.persistent.transaction.TransactionRunner;
+import org.hibernate.LockMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +37,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public Order getOrder(Long id) throws OrderNotFoundException {
-        return transactionRunner.run(connection -> orderRepository.findById(connection, id)
+        return transactionRunner.run(session -> orderRepository.findById(session, id, LockMode.NONE)
             .orElseThrow(() -> new OrderNotFoundException(String.format("Order %d was not found", id)))
         );
     }
@@ -47,55 +48,61 @@ public class OrderServiceImpl implements OrderService {
             .username(createOrderDto.getUsername())
             .build();
 
-        for (var createOrderItemDto : createOrderDto.getItems()) {
-            var orderItem = OrderItem.builder()
-                .name(createOrderItemDto.getName())
-                .count(createOrderItemDto.getCount())
-                .price(createOrderItemDto.getPrice())
-                .build();
+        return transactionRunner.run(session -> {
+            orderRepository.save(session, order);
 
-            order.addItem(orderItem);
-        }
+            for (var createOrderItemDto : createOrderDto.getItems()) {
+                var orderItem = OrderItem.builder()
+                    .name(createOrderItemDto.getName())
+                    .order(order)
+                    .count(createOrderItemDto.getCount())
+                    .price(createOrderItemDto.getPrice())
+                    .build();
 
-        return transactionRunner.run(connection -> {
-            var createdOrder = orderRepository.save(connection, order);
-            logger.info("Created order with {} id", createdOrder.getId());
+                order.addItem(orderItem);
+                orderItemRepository.save(session, orderItem);
+            }
 
-            return createdOrder;
+            logger.info("Created order with {} id", order.getId());
+
+            return order;
         });
     }
 
     @Override
     public void addOrderItem(Long orderId, CreateOrderItemDto createOrderItemDto) throws OrderNotFoundException {
-        transactionRunner.run(connection -> {
-            var orderExists = orderRepository.checkExistsByIdAndLock(connection, orderId);
-            if (!orderExists) {
+        transactionRunner.run(session -> {
+            var orderOptional = orderRepository.findById(session, orderId, LockMode.PESSIMISTIC_READ);
+            if (orderOptional.isEmpty()) {
                 var errorMessage = String.format("Order %d was not found", orderId);
                 logger.error(errorMessage);
 
                 throw new OrderNotFoundException(errorMessage);
             }
 
+            var order = orderOptional.get();
             var orderItem = OrderItem.builder()
-                .orderId(orderId)
+                .order(order)
                 .name(createOrderItemDto.getName())
                 .count(createOrderItemDto.getCount())
                 .price(createOrderItemDto.getPrice())
                 .build();
 
-            var addedOrderItem = orderItemRepository.save(connection, orderItem);
-            logger.info("Order item with {} id was added to order with {} id", addedOrderItem.getId(), orderId);
+            order.updateTimestamp();
 
-            orderRepository.updateOrderTimestamp(connection, orderId);
+            orderItemRepository.save(session, orderItem);
+            orderRepository.save(session, order);
 
-            return addedOrderItem;
+            logger.info("Order item with {} id was added to order with {} id", orderItem.getId(), orderId);
+
+            return orderItem;
         });
     }
 
     @Override
     public void changeOrderItemCount(Long orderItemId, int count) throws OrderItemNotFoundException {
-        transactionRunner.run(connection -> {
-            var orderItem = orderItemRepository.findByIdAndLock(connection, orderItemId)
+        transactionRunner.run(session -> {
+            var orderItem = orderItemRepository.findById(session, orderItemId, LockMode.PESSIMISTIC_READ)
                 .orElseThrow(() -> {
                     var errorMessage = String.format("Order item %d was not found", orderItemId);
                     logger.error(errorMessage);
@@ -106,21 +113,21 @@ public class OrderServiceImpl implements OrderService {
             var previousOrderItemCount = orderItem.getCount();
             orderItem.changeCount(count);
 
-            var changedOrderItem = orderItemRepository.save(connection, orderItem);
+            orderItemRepository.save(session, orderItem);
 
             var logMessagePattern = "Count of order item with {} id was changed from {} to {}";
             logger.info(logMessagePattern, orderItemId, previousOrderItemCount, count);
 
-            orderRepository.updateOrderTimestamp(connection, orderItem.getOrderId());
+            orderRepository.updateOrderTimestamp(session, orderItem.getOrder().getId());
 
-            return changedOrderItem;
+            return orderItem;
         });
     }
 
     @Override
     public void doneAllOrders() {
-        transactionRunner.run(connection -> {
-            var ordersCount = orderRepository.countNonDone(connection);
+        transactionRunner.run(session -> {
+            var ordersCount = orderRepository.countNonDone(session);
             if (ordersCount == 0) {
                 logger.info("All orders have already been done");
                 return 0;
@@ -130,7 +137,7 @@ public class OrderServiceImpl implements OrderService {
             var batchSize = 100;
 
             while (ordersDoneCount < ordersCount) {
-                orderRepository.doneAllNonDoneOrdersBatched(connection, batchSize);
+                orderRepository.doneAllNonDoneOrdersBatched(session, batchSize);
                 ordersDoneCount += batchSize;
             }
 

@@ -6,11 +6,6 @@ sourceCompatibility = JavaVersion.VERSION_11
 targetCompatibility = JavaVersion.VERSION_11
 
 dependencies {
-    implementation "org.flywaydb:flyway-core"
-    implementation "org.postgresql:postgresql"
-
-    implementation "org.hibernate:hibernate-core"
-
     implementation "ch.qos.logback:logback-classic"
 
     testImplementation "org.junit.jupiter:junit-jupiter-api"
@@ -18,12 +13,6 @@ dependencies {
 
     testImplementation "org.mockito:mockito-core"
     testImplementation "org.assertj:assertj-core"
-
-    testImplementation("org.testcontainers:junit-jupiter:${testcontainersVersion}")
-    testImplementation("org.testcontainers:postgresql:${testcontainersVersion}")
-
-    compileOnly "org.projectlombok:lombok"
-    annotationProcessor "org.projectlombok:lombok"
 }
 
 test {
