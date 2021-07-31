@@ -5,39 +5,43 @@ import com.luxoft.orders.api.CreateOrderDto;
 import com.luxoft.orders.api.CreateOrderItemDto;
 import com.luxoft.orders.domain.model.Order;
 import com.luxoft.orders.domain.model.OrderItem;
-import com.luxoft.orders.persistent.api.JpaOrderItemRepository;
-import com.luxoft.orders.persistent.api.JpaOrderRepository;
-import com.luxoft.orders.persistent.transaction.JpaTransactionRunner;
+import com.luxoft.orders.persistent.api.OrderItemRepository;
+import com.luxoft.orders.persistent.api.OrderRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.EntityManager;
 import java.math.BigDecimal;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * OrderServiceImplTest class
  *
  * @author  Nikolai Osipov <nao99.dev@gmail.com>
  * @version 1.0.0
- * @since   2021-06-24
+ * @since   2021-08-02
  */
+@Transactional
 class OrderServiceImplTest extends DatabaseTest {
-    private JpaOrderItemRepository orderItemRepository;
-    private JpaOrderRepository orderRepository;
+    @Autowired
+    private EntityManager entityManager;
+
+    @Autowired
+    private OrderRepository orderRepository;
+
+    @Autowired
+    private OrderItemRepository orderItemRepository;
 
     private OrderServiceImpl service;
 
     @BeforeEach
     public void setUp() throws Exception {
-        var transactionRunner = new JpaTransactionRunner(sessionFactory);
-
-        orderItemRepository = new JpaOrderItemRepository();
-        orderRepository = new JpaOrderRepository();
-
-        service = new OrderServiceImpl(transactionRunner, orderRepository, orderItemRepository);
+        service = new OrderServiceImpl(orderRepository, orderItemRepository);
     }
 
     @Test
@@ -122,6 +126,7 @@ class OrderServiceImplTest extends DatabaseTest {
 
         // when
         service.addOrderItem(order.getId(), createOrderItemDto);
+        entityManager.detach(order);
 
         var selectedOrder = service.getOrder(order.getId());
 
@@ -138,7 +143,7 @@ class OrderServiceImplTest extends DatabaseTest {
             .isEqualTo(createOrderItemDto.getCount());
 
         assertThat(selectedOrderItem.getPrice().compareTo(createOrderItemDto.getPrice()))
-            .isEqualTo(0);
+            .isEqualByComparingTo(0);
     }
 
     @Test
@@ -163,6 +168,9 @@ class OrderServiceImplTest extends DatabaseTest {
         var orderItem = createOrderItem(order, "Shoes", 10, BigDecimal.valueOf(1000L));
 
         // when
+        entityManager.detach(orderItem);
+        entityManager.detach(order);
+
         service.changeOrderItemCount(orderItem.getId(), expectedCount);
 
         var selectedOrder = service.getOrder(order.getId());
@@ -201,6 +209,10 @@ class OrderServiceImplTest extends DatabaseTest {
         // when
         service.doneAllOrders();
 
+        entityManager.detach(order1);
+        entityManager.detach(order2);
+        entityManager.detach(order3);
+
         var selectedOrder1 = service.getOrder(order1.getId());
         var selectedOrder2 = service.getOrder(order2.getId());
         var selectedOrder3 = service.getOrder(order3.getId());
@@ -228,13 +240,7 @@ class OrderServiceImplTest extends DatabaseTest {
             .username(username)
             .build();
 
-        try (var session = sessionFactory.openSession()) {
-            var transaction = session.getTransaction();
-            transaction.begin();
-
-            orderRepository.save(session, order);
-            transaction.commit();
-        }
+        orderRepository.save(order);
 
         return order;
     }
@@ -258,13 +264,7 @@ class OrderServiceImplTest extends DatabaseTest {
             .price(price)
             .build();
 
-        try (var session = sessionFactory.openSession()) {
-            var transaction = session.getTransaction();
-            transaction.begin();
-
-            orderItemRepository.save(session, orderItem);
-            transaction.commit();
-        }
+        orderItemRepository.save(orderItem);
 
         return orderItem;
     }

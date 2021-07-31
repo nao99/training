@@ -1,5 +1,10 @@
 package com.luxoft.orders.api;
 
+import org.springframework.validation.annotation.Validated;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -9,8 +14,13 @@ import java.util.List;
  * @version 1.0.0
  * @since   2021-06-22
  */
+@Validated
 public class CreateOrderDto {
+    @NotNull
     private String username;
+
+    @NotEmpty
+    @Valid
     private List<CreateOrderItemDto> items;
 
     public String getUsername() {

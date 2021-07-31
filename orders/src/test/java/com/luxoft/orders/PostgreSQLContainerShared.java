@@ -1,6 +1,5 @@
 package com.luxoft.orders;
 
-import com.luxoft.orders.persistent.migration.FlywayMigrationsExecutor;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 /**
@@ -24,11 +23,5 @@ public class PostgreSQLContainerShared extends PostgreSQLContainer<PostgreSQLCon
         }
 
         return container;
-    }
-
-    @Override
-    public void start() {
-        super.start();
-        FlywayMigrationsExecutor.execute(container.getJdbcUrl(), container.getUsername(), container.getPassword());
     }
 }

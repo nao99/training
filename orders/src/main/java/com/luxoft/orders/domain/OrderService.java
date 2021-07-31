@@ -37,7 +37,7 @@ public interface OrderService {
      * @param orderId            an order id
      * @param createOrderItemDto a create order item dto
      */
-    void addOrderItem(Long orderId, CreateOrderItemDto createOrderItemDto) throws OrderNotFoundException;
+    OrderItem addOrderItem(Long orderId, CreateOrderItemDto createOrderItemDto) throws OrderNotFoundException;
 
     /**
      * Changes an {@link OrderItem} count
