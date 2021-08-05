@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: "Orders"
+
+  datasource:
+    driver-class-name: "org.postgresql.Driver"
+    username: "dbuser"
+    password: "dbuser"
+    url: "jdbc:postgresql://172.50.1.2/app"
+
+  jpa:
+    show-sql: true
