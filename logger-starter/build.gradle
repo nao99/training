@@ -1,0 +1,29 @@
+plugins {
+    id "java"
+    id "com.github.johnrengelman.shadow"
+    id "maven-publish"
+}
+
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
+
+dependencies {
+    implementation "org.springframework.boot:spring-boot-starter:${springBootStarterVersion}"
+    implementation "org.springframework.boot:spring-boot-configuration-processor"
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = "com.luxoft"
+            artifactId = "spring-boot-logger-starter"
+            version = "1.0.0"
+
+            from components.java
+        }
+    }
+}
+
+compileJava.options.encoding = "UTF-8"
+
+tasks.build.dependsOn tasks.publishToMavenLocal
