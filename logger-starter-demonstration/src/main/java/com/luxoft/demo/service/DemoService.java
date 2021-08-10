@@ -1,7 +1,6 @@
 package com.luxoft.demo.service;
 
 import org.slf4j.Logger;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,8 +16,8 @@ public class DemoService {
     private final Logger logger;
 
     @Autowired
-    public DemoService(ObjectProvider<Logger> loggerObjectProvider) {
-        this.logger = loggerObjectProvider.getObject(DemoService.class);
+    public DemoService(Logger logger) {
+        this.logger = logger;
     }
 
     public void demo() {

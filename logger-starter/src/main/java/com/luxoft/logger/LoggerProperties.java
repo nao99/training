@@ -13,13 +13,19 @@ import org.springframework.boot.context.properties.ConstructorBinding;
 @ConfigurationProperties(prefix = "logger")
 @ConstructorBinding
 public class LoggerProperties {
-    private final String messagePrefix;
+    private final String fileName;
+    private final String directoryToSave;
 
-    public LoggerProperties(String messagePrefix) {
-        this.messagePrefix = messagePrefix;
+    public LoggerProperties(String fileName, String directoryToSave) {
+        this.fileName = fileName;
+        this.directoryToSave = directoryToSave;
     }
 
-    public String getMessagePrefix() {
-        return messagePrefix;
+    public String getFileName() {
+        return fileName;
+    }
+
+    public String getDirectoryToSave() {
+        return directoryToSave;
     }
 }

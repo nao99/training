@@ -1,0 +1,16 @@
+<configuration>
+    <springProperty scope="context" name="directoryToSave" source="logger.directoryToSave"/>
+    <springProperty scope="context" name="fileName" source="logger.fileName"/>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.FileAppender">
+        <file>${directoryToSave}/${fileName}.log</file>
+
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="debug">
+        <appender-ref ref="STDOUT" />
+    </root>
+</configuration>

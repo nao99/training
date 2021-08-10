@@ -2,7 +2,6 @@ package com.luxoft.demo.controller;
 
 import com.luxoft.demo.service.DemoService;
 import org.slf4j.Logger;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,8 +19,8 @@ public class DemoController {
     private final DemoService service;
 
     @Autowired
-    public DemoController(ObjectProvider<Logger> loggerObjectProvider, DemoService service) {
-        this.logger = loggerObjectProvider.getObject(DemoController.class);
+    public DemoController(Logger logger, DemoService service) {
+        this.logger = logger;
         this.service = service;
     }
 
