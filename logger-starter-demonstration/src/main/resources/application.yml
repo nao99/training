@@ -1,0 +1,6 @@
+server:
+  port: 8080
+
+logger:
+  fileName: "logger_starter_demonstration"
+  directoryToSave: "/home/glen/Projects/luxoft/training-gradle/logs"
